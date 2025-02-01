@@ -1,58 +1,147 @@
+import { useRoute } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
-import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { addDoc, collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { db } from '../Config/Firebase';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
 
 const Confirm = () => {
+  const route = useRoute();
+  const bookingId = route.params?.bookingId;
+
   const [timeSlot, setTimeSlot] = useState({ from: null, to: null });
   const [selectedDate, setSelectedDate] = useState(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [tranxID, setTranxID] = useState('');
   const [paymentType, setPaymentType] = useState('Advance Payment');
-  const indoorCost = 500;
+  const [indoorCost, setIndoorCost] = useState(0);
+  const [bookingData, setBookingData] = useState(null);
+
+  useEffect(() => {
+    if (bookingId) {
+      fetchBookingDetails();
+    }
+  }, [bookingId]);
+
+  const fetchBookingDetails = async () => {
+    try {
+      const bookingRef = doc(db, 'bookings', bookingId);
+      const bookingSnap = await getDoc(bookingRef);
+      
+      if (bookingSnap.exists()) {
+        const data = bookingSnap.data();
+        setBookingData(data);
+        setIndoorCost(data.price || 0);
+      } else {
+        console.log('No booking data found');
+        Alert.alert('Error', 'Booking information not found');
+      }
+    } catch (error) {
+      console.error('Failed to fetch booking details:', error);
+      Alert.alert('Error', 'Failed to load booking information');
+    }
+  };
+
+  const checkSlotAvailability = async (date, fromTime, toTime) => {
+    try {
+      const bookingsRef = collection(db, 'indoorBookings');
+      const q = query(
+        bookingsRef,
+        where('date', '==', date),
+        where('fromTime', '==', fromTime),
+        where('toTime', '==', toTime)
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.empty;
+    } catch (error) {
+      console.error('Error checking slot availability:', error);
+      return false;
+    }
+  };
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
-  const handleTimeChange = (slot) => {
-    setTimeSlot(slot);
+  const calculateEndTime = (startTime) => {
+    // Convert time string to number (e.g., "10am" to 10)
+    const hour = parseInt(startTime.replace('am', '').replace('pm', ''));
+    const isAM = startTime.includes('am');
+    
+    // Calculate end hour
+    let endHour = hour + 1;
+    
+    // Handle AM/PM conversion
+    if (hour === 11 && isAM) {
+      return '12pm';
+    } else if (hour === 12) {
+      return '1pm';
+    } else if (isAM) {
+      return `${endHour}am`;
+    } else {
+      return `${endHour}pm`;
+    }
+  };
+
+  const handleTimeChange = async (slot) => {
+    // Only use the 'from' time and calculate 'to' time
+    if (selectedDate && slot.from) {
+      const endTime = calculateEndTime(slot.from);
+      const newTimeSlot = {
+        from: slot.from,
+        to: endTime
+      };
+
+      const isAvailable = await checkSlotAvailability(selectedDate, newTimeSlot.from, newTimeSlot.to);
+      
+      if (!isAvailable) {
+        Alert.alert(
+          'Time Slot Unavailable',
+          'This time slot is already booked. Please choose another time or date.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      setTimeSlot(newTimeSlot);
+    }
   };
 
   const handleSubmit = async () => {
     const auth = getAuth();
     const userId = auth.currentUser?.uid;
 
-    if (!selectedDate) {
-      Alert.alert('Error', 'Please select a date.');
-      return;
-    }
-    if (!timeSlot.from || !timeSlot.to) {
-      Alert.alert('Error', 'Please select a time slot.');
-      return;
-    }
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter your name.');
-      return;
-    }
-    if (!phone.trim() || phone.length < 10) {
-      Alert.alert('Error', 'Please enter a valid phone number.');
-      return;
-    }
-    if (!tranxID.trim()) {
-      Alert.alert('Error', 'Please enter a transaction ID.');
-      return;
-    }
-    if (!userId) {
-      Alert.alert('Error', 'User not authenticated.');
+    if (!selectedDate || !timeSlot.from || !timeSlot.to || !name.trim() ||
+        !phone.trim() || phone.length < 10 || !tranxID.trim() || !userId) {
+      Alert.alert('Error', 'Please fill all fields correctly.');
       return;
     }
 
-    const bookingData = {
+    const isAvailable = await checkSlotAvailability(selectedDate, timeSlot.from, timeSlot.to);
+    if (!isAvailable) {
+      Alert.alert(
+        'Time Slot Unavailable',
+        'This time slot was just booked by someone else. Please choose another time or date.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    const indoorBookingData = {
       date: selectedDate,
       fromTime: timeSlot.from,
       toTime: timeSlot.to,
@@ -61,14 +150,20 @@ const Confirm = () => {
       cost: indoorCost,
       tranxID: tranxID.trim(),
       paymentType,
-      userId: userId,
+      userId,
+      bookingId,
       createdAt: new Date().toISOString(),
+      location: bookingData?.location || '',
+      status: 'pending',
+      userEmail: bookingData?.userEmail || '',
+      bookingReference: bookingData?.bookingReference || ''
     };
 
     try {
-      const docRef = await addDoc(collection(db, 'indoorBookings'), bookingData);
+      await addDoc(collection(db, 'indoorBookings'), indoorBookingData);
       Alert.alert('Success', 'Booking Confirmed!');
     } catch (error) {
+      console.error('Error confirming booking:', error);
       Alert.alert('Error', 'Error confirming booking.');
     }
   };
@@ -87,10 +182,8 @@ const Confirm = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Select Time Slot</Text>
           <TimePicker onTimeSelect={handleTimeChange} />
-          <View>
           <Text style={styles.timing}>From: {timeSlot.from || 'Not selected'}</Text>
-          <Text>To: {timeSlot.to || 'Not selected'}</Text>
-          </View>
+          <Text style={styles.timing}>To: {timeSlot.to || 'Not selected'}</Text>
         </View>
         <View style={styles.inputContainer}>
           <TextInput
@@ -111,7 +204,7 @@ const Confirm = () => {
         </View>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Indoor Cost</Text>
-          <Text style={styles.nonEditableInput}>${indoorCost}</Text>
+          <Text style={styles.nonEditableInput}>{"  " + indoorCost + " ৳"}</Text>
         </View>
         <View style={styles.inputContainer}>
           <TextInput
@@ -220,8 +313,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
-  timing:{
+  timing: {
   }
 });
 
-export default Confirm;
+export default Confirm;

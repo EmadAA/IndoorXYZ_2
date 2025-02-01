@@ -146,10 +146,10 @@ const Booking = () => {
 
       {/* Booking Details Section */}
       <View style={styles.bookingDetails}>
-        <View style={styles.dateTimeContainer}>
+        {/* <View style={styles.dateTimeContainer}>
           <Text style={styles.dateTimeLabel}>Date & Time</Text>
           <Text>{new Date(indoorData.date).toLocaleString()}</Text>
-        </View>
+        </View> */}
         <Text style={styles.price}>
           ৳{indoorData.price}
           <Text style={styles.priceCurrency}>/hr</Text>

@@ -4,29 +4,34 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 const TimePicker = ({ onTimeSelect }) => {
   const [selectedFromTime, setSelectedFromTime] = useState(null);
   const [selectedToTime, setSelectedToTime] = useState(null);
+
   const times = [
     '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm',
     '6pm', '7pm', '8pm', '9pm', '10pm', '11pm', '12am'
   ];
 
-  const selectFromTime = (time) => {
-    setSelectedFromTime(time);
-    setSelectedToTime(null); // Reset toTime to ensure it is after fromTime
-    if (onTimeSelect) onTimeSelect({ from: time, to: null }); // Notify parent of change
+  const calculateNextHour = (time) => {
+    const index = times.indexOf(time);
+    if (index < times.length - 1) {
+      return times[index + 1];
+    }
+    return null;
   };
 
-  const selectToTime = (time) => {
-    if (times.indexOf(time) > times.indexOf(selectedFromTime)) {
-      setSelectedToTime(time);
-      if (onTimeSelect) onTimeSelect({ from: selectedFromTime, to: time }); // Notify parent of change
-    }
+  const selectFromTime = (time) => {
+    setSelectedFromTime(time);
+    const nextHour = calculateNextHour(time);
+    setSelectedToTime(nextHour);
+    if (onTimeSelect) onTimeSelect({ from: time, to: nextHour });
   };
+
+  // Removed selectToTime function since we're auto-calculating it
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>From:</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
-        {times.map((time, index) => (
+        {times.slice(0, -1).map((time, index) => (
           <TouchableOpacity
             key={index}
             style={[styles.timeItem, selectedFromTime === time ? styles.selected : {}]}
@@ -36,19 +41,17 @@ const TimePicker = ({ onTimeSelect }) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
-      {selectedFromTime && (
+      
+      {selectedFromTime && selectedToTime && (
         <>
           <Text style={styles.title}>To:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
-            {times.slice(times.indexOf(selectedFromTime) + 1).map((time, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.timeItem, selectedToTime === time ? styles.selected : {}]}
-                onPress={() => selectToTime(time)}
-              >
-                <Text style={styles.timeText}>{time.toUpperCase()}</Text>
-              </TouchableOpacity>
-            ))}
+            <TouchableOpacity
+              style={[styles.timeItem, styles.selected]}
+              disabled={true}
+            >
+              <Text style={styles.timeText}>{selectedToTime.toUpperCase()}</Text>
+            </TouchableOpacity>
           </ScrollView>
         </>
       )}
@@ -83,4 +86,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default  TimePicker;
+export default TimePicker;

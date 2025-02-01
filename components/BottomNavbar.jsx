@@ -26,19 +26,6 @@ const BottomNavbar = ({ activeTab, setActiveTab }) => {
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => setActiveTab('playground')}>
-        <Icon
-          name="sports-soccer"
-          style={styles.playgroundIcon}
-          size={30}
-          color={activeTab === 'playground' ? '#7A67FF' : '#777'}
-        />
-        <Text
-          style={[styles.navText, activeTab === 'playground' && styles.activeNavText]}
-        >
-          Playground
-        </Text>
-      </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('BookingList')}>
         <Icon

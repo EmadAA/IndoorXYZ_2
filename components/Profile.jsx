@@ -144,7 +144,7 @@ const Profile = () => {
                <TouchableOpacity 
                   style={styles.logoutButton} 
                   onPress={handleLogout}
-                >`
+                >
   <Text style={styles.LogoutBtn}>Logout</Text>
 </TouchableOpacity>
 

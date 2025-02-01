@@ -59,7 +59,7 @@ const BottomNavbar = ({ activeTab, setActiveTab }) => {
 
 const styles = StyleSheet.create({
   bottomNavigation: {
-      marginTop: 25,
+      // marginTop: 3,
       flexDirection: 'row',
       justifyContent: 'space-around',
       paddingVertical: 10,

@@ -14,6 +14,7 @@ import {
   View
 } from 'react-native';
 import { db } from '../Config/Firebase';
+import BottomNavbar from './BottomNavbar';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
 
@@ -241,6 +242,7 @@ const Confirm = () => {
           <Text style={styles.confirmButtonText}>Confirm</Text>
         </TouchableOpacity>
       </ScrollView>
+        <BottomNavbar />
     </KeyboardAvoidingView>
   );
 };

@@ -12,6 +12,7 @@ import {
   View
 } from 'react-native';
 import { db } from '../Config/Firebase';
+import BottomNavbar from './BottomNavbar';
 
 const Booking = () => {
   const navigation = useNavigation();
@@ -170,6 +171,7 @@ const Booking = () => {
           <Text style={styles.bookNowButtonText}>Book Now</Text>
         </TouchableOpacity>
       </View>
+      <BottomNavbar />
     </View>
   );
 };

@@ -17,7 +17,6 @@ const BookingList = () => {
       return;
     }
 
-    // Changed collection from 'bookings' to 'indoorBookings'
     const bookingsRef = collection(db, 'indoorBookings');
     const userBookingsQuery = query(bookingsRef, where('userId', '==', userId));
 
@@ -26,7 +25,7 @@ const BookingList = () => {
         ...doc.data(),
         id: doc.id,
       }));
-      console.log('Fetched bookings:', userBookings); // Debug log
+      console.log('Fetched bookings:', userBookings);
       setBookings(userBookings);
     }, (error) => {
       console.error("Error fetching bookings:", error);
@@ -61,11 +60,20 @@ const BookingList = () => {
                   <Text style={styles.indoorName}>{booking.name}</Text>
                   <Text style={styles.price}>৳{booking.cost}</Text>
                 </View>
+
+                {/* Time Slot and Date section */}
                 <View style={styles.timeSlotContainer}>
-                  <Text style={styles.timeSlot}>
-                    {booking.fromTime} - {booking.toTime}
-                  </Text>
+                  <View style={styles.dateTimeContainer}>
+                    <Text style={styles.timeSlot}>
+                      {booking.fromTime} - {booking.toTime}
+                    </Text>
+                    <Text style={styles.date}>
+                      {booking.date}
+                    </Text>
+                  </View>
                 </View>
+                {/* Time Slot and Date section End here*/}
+                
                 <View style={styles.paymentInfo}>
                   <Text style={styles.paymentType}>{booking.paymentType}</Text>
                 </View>
@@ -160,7 +168,16 @@ const styles = StyleSheet.create({
   timeSlotContainer: {
     marginBottom: 8,
   },
+  dateTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    alignItems: 'center'
+  },
   timeSlot: {
+    fontSize: 14,
+    color: '#666',
+  },
+  date: {
     fontSize: 14,
     color: '#666',
   },

@@ -8,6 +8,7 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Profile from './components/Profile';
 import Signup from './components/Signup';
+import ViewOrder from './components/ViewOrder';
 import WelcomePage from './components/Welcomepage';
 const Stack = createStackNavigator();
 
@@ -57,6 +58,11 @@ export default function AppNavigation() {
       <Stack.Screen
         name="BookingList"
         component={BookingList}
+        options={{ headerShown: false }} // Hide header for Home Page
+      />
+      <Stack.Screen
+        name="ViewOrder"
+        component={ViewOrder}
         options={{ headerShown: false }} // Hide header for Home Page
       />
       

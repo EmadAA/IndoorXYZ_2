@@ -27,7 +27,7 @@ const Confirm = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [tranxID, setTranxID] = useState('');
-  const [paymentType, setPaymentType] = useState('Advance Payment');
+  const [paymentType, setPaymentType] = useState('Cash On Sight');
   const [indoorCost, setIndoorCost] = useState(0);
   const [indoorName, setIndoorName] = useState('');
   const [bookingData, setBookingData] = useState(null);
@@ -61,13 +61,12 @@ const Confirm = () => {
   const checkSlotAvailability = async (date, fromTime, toTime) => {
     try {
       const bookingsRef = collection(db, 'indoorBookings');
-      // Updated query to check for specific indoor
       const q = query(
         bookingsRef,
         where('date', '==', date),
         where('fromTime', '==', fromTime),
         where('toTime', '==', toTime),
-        where('IndoorName', '==', indoorName) // Added this condition
+        where('IndoorName', '==', indoorName)
       );
 
       const querySnapshot = await getDocs(q);
@@ -126,8 +125,11 @@ const Confirm = () => {
     const auth = getAuth();
     const userId = auth.currentUser?.uid;
 
+    // Modify validation for TranxID based on payment type
+    const tranxIDValidation = paymentType === 'Full Payment' ? tranxID.trim() === '' : false;
+
     if (!selectedDate || !timeSlot.from || !timeSlot.to || !name.trim() ||
-        !phone.trim() || phone.length < 10 || !tranxID.trim() || !userId) {
+        !phone.trim() || phone.length < 10 || tranxIDValidation || !userId) {
       Alert.alert('Error', 'Please fill all fields correctly.');
       return;
     }
@@ -149,7 +151,7 @@ const Confirm = () => {
       name: name.trim(),
       phone: phone.trim(),
       cost: indoorCost,
-      tranxID: tranxID.trim(),
+      tranxID: paymentType === 'Full Payment' ? tranxID.trim() : 'N/A',
       paymentType,
       userId,
       bookingId,
@@ -214,12 +216,16 @@ const Confirm = () => {
           <Text style={styles.nonEditableInput}>{"  " + indoorCost + " ৳"}</Text>
         </View>
         <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter TranxID"
-            value={tranxID}
-            onChangeText={setTranxID}
-          />
+          {paymentType === 'Full Payment' ? (
+            <TextInput
+              style={styles.input}
+              placeholder="Enter TranxID"
+              value={tranxID}
+              onChangeText={setTranxID}
+            />
+          ) : (
+            <Text style={styles.nonEditableInput}>TranxID not required for Cash On Sight</Text>
+          )}
         </View>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Payment Type</Text>
@@ -227,14 +233,17 @@ const Confirm = () => {
             <TouchableOpacity
               style={[
                 styles.paymentTypeCheckbox,
-                paymentType === 'Advance Payment' ? styles.selectedPaymentType : null,
+                paymentType === 'Cash On Sight' ? styles.selectedPaymentType : null,
               ]}
-              onPress={() => setPaymentType('Advance Payment')}
+              onPress={() => {
+                setPaymentType('Cash On Sight');
+                setTranxID(''); // Clear TranxID when switching to Cash On Sight
+              }}
             >
               <Text style={[
                 styles.paymentTypeText,
-                paymentType === 'Advance Payment' && { color: '#fff' }
-              ]}>Advance Payment</Text>
+                paymentType === 'Cash On Sight' && { color: '#fff' }
+              ]}>Cash On Sight</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[

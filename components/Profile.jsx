@@ -159,6 +159,12 @@ const Profile = () => {
       >
         <Text style={styles.addIndoorText}>Add Indoor</Text>
       </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.addIndoorButton} 
+        onPress={() => handleNavigate('ViewOrder')}
+      >
+        <Text style={styles.addIndoorText}>View Orders</Text>
+      </TouchableOpacity>
 
       {/* Booking Cards */}
       {bookings.length === 0 ? (

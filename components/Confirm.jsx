@@ -29,6 +29,7 @@ const Confirm = () => {
   const [tranxID, setTranxID] = useState('');
   const [paymentType, setPaymentType] = useState('Advance Payment');
   const [indoorCost, setIndoorCost] = useState(0);
+  const [indoorName, setIndoorName] = useState('');
   const [bookingData, setBookingData] = useState(null);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ const Confirm = () => {
         const data = bookingSnap.data();
         setBookingData(data);
         setIndoorCost(data.price || 0);
+        setIndoorName(data.name || '');
       } else {
         console.log('No booking data found');
         Alert.alert('Error', 'Booking information not found');
@@ -59,11 +61,13 @@ const Confirm = () => {
   const checkSlotAvailability = async (date, fromTime, toTime) => {
     try {
       const bookingsRef = collection(db, 'indoorBookings');
+      // Updated query to check for specific indoor
       const q = query(
         bookingsRef,
         where('date', '==', date),
         where('fromTime', '==', fromTime),
-        where('toTime', '==', toTime)
+        where('toTime', '==', toTime),
+        where('IndoorName', '==', indoorName) // Added this condition
       );
 
       const querySnapshot = await getDocs(q);
@@ -79,14 +83,11 @@ const Confirm = () => {
   };
 
   const calculateEndTime = (startTime) => {
-    // Convert time string to number (e.g., "10am" to 10)
     const hour = parseInt(startTime.replace('am', '').replace('pm', ''));
     const isAM = startTime.includes('am');
     
-    // Calculate end hour
     let endHour = hour + 1;
     
-    // Handle AM/PM conversion
     if (hour === 11 && isAM) {
       return '12pm';
     } else if (hour === 12) {
@@ -99,7 +100,6 @@ const Confirm = () => {
   };
 
   const handleTimeChange = async (slot) => {
-    // Only use the 'from' time and calculate 'to' time
     if (selectedDate && slot.from) {
       const endTime = calculateEndTime(slot.from);
       const newTimeSlot = {
@@ -112,7 +112,7 @@ const Confirm = () => {
       if (!isAvailable) {
         Alert.alert(
           'Time Slot Unavailable',
-          'This time slot is already booked. Please choose another time or date.',
+          `This time slot is already booked . Please choose another time or date.`,
           [{ text: 'OK' }]
         );
         return;
@@ -136,7 +136,7 @@ const Confirm = () => {
     if (!isAvailable) {
       Alert.alert(
         'Time Slot Unavailable',
-        'This time slot was just booked by someone else. Please choose another time or date.',
+        `This time slot was just booked for ${indoorName}. Please choose another time or date.`,
         [{ text: 'OK' }]
       );
       return;
@@ -157,11 +157,13 @@ const Confirm = () => {
       location: bookingData?.location || '',
       status: 'pending',
       userEmail: bookingData?.userEmail || '',
-      bookingReference: bookingData?.bookingReference || ''
+      bookingReference: bookingData?.bookingReference || '',
+      IndoorName: indoorName
     };
 
     try {
-      await addDoc(collection(db, 'indoorBookings'), indoorBookingData);
+      const docRef = await addDoc(collection(db, 'indoorBookings'), indoorBookingData);
+      console.log('Booking added with ID: ', docRef.id);
       Alert.alert('Success', 'Booking Confirmed!');
     } catch (error) {
       console.error('Error confirming booking:', error);
@@ -204,6 +206,10 @@ const Confirm = () => {
           />
         </View>
         <View style={styles.inputContainer}>
+          <Text style={styles.label}>Indoor Name</Text>
+          <Text style={styles.nonEditableInput}>{"  " + indoorName}</Text>
+        </View>
+        <View style={styles.inputContainer}>
           <Text style={styles.label}>Indoor Cost</Text>
           <Text style={styles.nonEditableInput}>{"  " + indoorCost + " ৳"}</Text>
         </View>
@@ -225,7 +231,10 @@ const Confirm = () => {
               ]}
               onPress={() => setPaymentType('Advance Payment')}
             >
-              <Text style={styles.paymentTypeText}>Advance Payment</Text>
+              <Text style={[
+                styles.paymentTypeText,
+                paymentType === 'Advance Payment' && { color: '#fff' }
+              ]}>Advance Payment</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -234,7 +243,10 @@ const Confirm = () => {
               ]}
               onPress={() => setPaymentType('Full Payment')}
             >
-              <Text style={styles.paymentTypeText}>Full Payment</Text>
+              <Text style={[
+                styles.paymentTypeText,
+                paymentType === 'Full Payment' && { color: '#fff' }
+              ]}>Full Payment</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -242,7 +254,7 @@ const Confirm = () => {
           <Text style={styles.confirmButtonText}>Confirm</Text>
         </TouchableOpacity>
       </ScrollView>
-        <BottomNavbar />
+      <BottomNavbar />
     </KeyboardAvoidingView>
   );
 };
@@ -312,10 +324,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#7A67FF',
   },
   paymentTypeText: {
-    color: '#fff',
+    color: '#7A67FF',
     fontSize: 14,
   },
   timing: {
+    fontSize: 14,
+    marginTop: 5,
+    color: '#555',
   }
 });
 

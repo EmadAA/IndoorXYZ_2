@@ -52,9 +52,16 @@ const BookingList = () => {
           bookings.map((booking) => (
             <View key={booking.id} style={styles.card}>
               <View style={styles.contentContainer}>
+                <View  style={styles.nameandlocation}>
                 <View style={styles.locationContainer}>
                   <Text style={styles.locationIcon}>📍</Text>
                   <Text style={styles.locationText}>{booking.location || 'Indoor Location'}</Text>
+                </View>
+                <View style={styles.indoorNameContainer}>
+                  <Text style={styles.indoorNameText}> 
+                    {booking.indoorName || 'Indoor Name'}
+                  </Text>
+                </View>
                 </View>
                 <View style={styles.detailsRow}>
                   <Text style={styles.indoorName}>{booking.name}</Text>
@@ -138,6 +145,14 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 15,
+    
+  },
+  nameandlocation:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom:8,
+
   },
   locationContainer: {
     flexDirection: 'row',
@@ -150,6 +165,16 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 14,
     color: '#666',
+  },
+  indoorNameContainer:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  indoorNameText: {
+    fontSize: 18,
+    color: '#000',
+    fontWeight: 'bold',
   },
   detailsRow: {
     flexDirection: 'row',

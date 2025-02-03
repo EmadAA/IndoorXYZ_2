@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["Tranx", "Welcomepage"]
+  "cSpell.words": ["Tranx", "Welcomepage"],
+  "java.compile.nullAnalysis.mode": "automatic"
 }

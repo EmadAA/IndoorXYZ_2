@@ -1,14 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
 import { getAuth, signOut } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -21,6 +23,10 @@ const Profile = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editedBooking, setEditedBooking] = useState(null);
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
+  const [editedProfile, setEditedProfile] = useState(null);
 
   useEffect(() => {
     fetchUserDataAndBookings();
@@ -71,39 +77,85 @@ const Profile = () => {
     navigation.navigate(screen);
   };
 
-  const handleEdit = (bookingId) => {
-    // Navigate to edit screen with booking data
-    navigation.navigate('EditBooking', { bookingId });
+  const handleEdit = (booking) => {
+    setEditedBooking({
+      ...booking,
+      number: booking.phone || '' // Ensure number is always included
+    });
+    setEditModalVisible(true);
+  }
+
+  const handleUpdateBooking = async () => {
+    if (!editedBooking) return;
+  
+    try {
+      const bookingRef = doc(db, 'bookings', editedBooking.id);
+      await updateDoc(bookingRef, {
+        name: editedBooking.name,
+        location: editedBooking.location,
+        price: parseFloat(editedBooking.price),
+        phone: editedBooking.phone // Update to 'phone' to match your database
+      });
+  
+      // Refresh bookings
+      await fetchUserDataAndBookings();
+      
+      setEditModalVisible(false);
+      Alert.alert('Success', 'Booking updated successfully');
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      Alert.alert('Error', 'Failed to update booking');
+    }
   };
 
-  const handleCancel = async (bookingId) => {
+  const handleUpdateProfile = async () => {
+    if (!editedProfile) return;
+
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      const userDocRef = doc(db, 'users', user.uid);
+
+      await updateDoc(userDocRef, {
+        name: editedProfile.name,
+        phone: editedProfile.phone,
+      });
+
+      // Refresh user data
+      await fetchUserDataAndBookings();
+      
+      setEditProfileModalVisible(false);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile');
+    }
+  };
+
+  const handleDelete = async (bookingId) => {
     Alert.alert(
-      'Cancel Booking',
-      'Are you sure you want to cancel this booking?',
+      'Delete Indoor',
+      'Are you sure you want to delete this indoor?',
       [
         {
-          text: 'No',
+          text: 'Cancel',
           style: 'cancel',
         },
         {
-          text: 'Yes',
+          text: 'Delete',
+          style: 'destructive',
           onPress: async () => {
-            // Add cancellation logic here
-            // You might want to update the status rather than delete
             try {
-              // Update the booking status to cancelled
-              const bookingRef = doc(db, 'bookings', bookingId);
-              await updateDoc(bookingRef, {
-                status: 'cancelled',
-                cancelledAt: new Date().toISOString()
-              });
+              // Delete the booking document from Firestore
+              await deleteDoc(doc(db, 'bookings', bookingId));
               
-              // Refresh bookings
-              fetchUserDataAndBookings();
-              Alert.alert('Success', 'Booking cancelled successfully');
+              // Refresh bookings after deletion
+              await fetchUserDataAndBookings();
+              
+              Alert.alert('Success', 'Indoor deleted successfully');
             } catch (error) {
-              console.error('Error cancelling booking:', error);
-              Alert.alert('Error', 'Failed to cancel booking');
+              console.error('Error deleting indoor:', error);
+              Alert.alert('Error', 'Failed to delete indoor');
             }
           },
         },
@@ -122,12 +174,21 @@ const Profile = () => {
   const handleLogout = async () => {
     const auth = getAuth();
     try {
-      await signOut(auth);  // Sign out the user
-      navigation.navigate('Login');  // Navigate to the Login screen
+      await signOut(auth);
+      navigation.navigate('Login');
     } catch (error) {
       console.error('Error logging out:', error);
       Alert.alert('Error', 'Failed to log out');
     }
+  };
+
+  const handleEditProfile = () => {
+    setEditedProfile({
+      name: userData?.name || '',
+      phone: userData?.phone || '',
+      bkashNumber: userData?.bkashNumber || ''
+    });
+    setEditProfileModalVisible(true);
   };
 
   return (
@@ -135,24 +196,32 @@ const Profile = () => {
       {/* Profile Section */}
       <View style={styles.profileCard}>
         <Image
-          source={{uri:"https://via.placeholder.com/100"}}
+          source={require('../assets/profilePicture.jpg')}
           style={styles.profileImage}
         />
        <View style={styles.profileDetails}>
             <Text style={styles.name}>{ userData?.name || 'User'}</Text>
             <Text style={styles.phone}>{userData?.phone || 'No phone number'}</Text>
-               <TouchableOpacity 
-                  style={styles.logoutButton} 
-                  onPress={handleLogout}
-                >
-  <Text style={styles.LogoutBtn}>Logout</Text>
-</TouchableOpacity>
-
-            
+            <View style={styles.profileButtonRow}>
+              <TouchableOpacity 
+                style={styles.editProfileButton} 
+                onPress={handleEditProfile}
+              >
+                <Text style={styles.editProfileText}>Edit Profile</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.logoutButton} 
+                onPress={handleLogout}
+                
+              >
+                <Text style={styles.LogoutBtn}>Logout</Text>
+              </TouchableOpacity>
+            </View>
       </View>
       </View>
 
       {/* Add Indoor Button */}
+      <View style={styles.addAndViewIndoorButtonContainer}> 
       <TouchableOpacity 
         style={styles.addIndoorButton} 
         onPress={() => handleNavigate('AddPlayground')}
@@ -165,17 +234,18 @@ const Profile = () => {
       >
         <Text style={styles.addIndoorText}>View Orders</Text>
       </TouchableOpacity>
+      </View>
 
       {/* Booking Cards */}
       {bookings.length === 0 ? (
         <View style={styles.noBookings}>
           <Text style={styles.noBookingsText}>No bookings found</Text>
         </View>
-      ) : (
+      ) : 
         bookings.map((booking) => (
           <View key={booking.id} style={styles.bookingCard}>
             <Image
-              source={{ uri: booking.imageUrl || 'https://via.placeholder.com/300' }}
+              source={require('../assets/turf.jpg')}
               style={styles.bookingImage}
             />
             <View style={styles.bookingDetails}>
@@ -185,27 +255,133 @@ const Profile = () => {
               <View style={styles.buttonRow}>
                 <TouchableOpacity 
                   style={styles.editButton}
-                  onPress={() => handleEdit(booking.id)}
+                  onPress={() => handleEdit(booking)}
                 >
                   <Text style={styles.buttonText}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={styles.cancelButton}
-                  onPress={() => handleCancel(booking.id)}
+                  onPress={() => handleDelete(booking.id)}
                 >
                   <Text style={styles.buttonText}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-        ))
-      )}
+        ))}
+  
+        {/* Edit Booking Modal */}
+        <Modal
+  animationType="slide"
+  transparent={true}
+  visible={editModalVisible}
+  onRequestClose={() => setEditModalVisible(false)}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Edit Booking</Text>
+      
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Name"
+        value={editedBooking?.name}
+        onChangeText={(text) => setEditedBooking({...editedBooking, name: text})}
+      />
+      
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Location"
+        value={editedBooking?.location}
+        onChangeText={(text) => setEditedBooking({...editedBooking, location: text})}
+      />
+      
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Price"
+        keyboardType="numeric"
+        value={editedBooking?.price ? editedBooking.price.toString() : ''}
+        onChangeText={(text) => setEditedBooking({...editedBooking, price: text})}
+      />
+      
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Number"
+        keyboardType="phone-pad"
+        value={editedBooking?.phone || ''}
+        onChangeText={(text) => setEditedBooking({...editedBooking, phone: text})}
+      />
+      
+      <View style={styles.modalButtonRow}>
+        <TouchableOpacity 
+          style={styles.modalCancelButton}
+          onPress={() => setEditModalVisible(false)}
+        >
+          <Text style={styles.modalButtonText}>Cancel</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.modalUpdateButton}
+          onPress={handleUpdateBooking}
+        >
+          <Text style={styles.modalButtonText}>Update</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
 
-      {/* Bottom Navbar */}
-      <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
-    </ScrollView>
-  );
-};
+        {/* Edit Profile Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={editProfileModalVisible}
+          onRequestClose={() => setEditProfileModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Name"
+                value={editedProfile?.name}
+                onChangeText={(text) => setEditedProfile({...editedProfile, name: text})}
+              />
+              
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Phone Number"
+                keyboardType="phone-pad"
+                value={editedProfile?.phone}
+                onChangeText={(text) => setEditedProfile({...editedProfile, phone: text})}
+              />
+              
+              
+              <View style={styles.modalButtonRow}>
+                <TouchableOpacity 
+                  style={styles.modalCancelButton}
+                  onPress={() => setEditProfileModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.modalUpdateButton}
+                  onPress={handleUpdateProfile}
+                >
+                  <Text style={styles.modalButtonText}>Update</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+  
+        {/* Bottom Navbar */}
+        <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+      </ScrollView>
+    );
+  };
 
 const styles = StyleSheet.create({
   container: {
@@ -213,19 +389,25 @@ const styles = StyleSheet.create({
     marginTop: 50,
     backgroundColor: "#F8F8F8",
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
     margin: 20,
-    border: '1px solid #000',
+    borderWidth: 1,
+    borderColor: '#000',
     borderRadius: 15,
     elevation: 3,
     height: 180,
   },
   profileImage: {
-    width: 160,
-    height: 180,
+    width: 130,
+    height: 170,
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
   },
@@ -243,16 +425,12 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 5,
   },
-  socialLink: {
-    fontSize: 14,
-    color: "#7a67ff",
-    marginTop: 5,
-  },
   addIndoorButton: {
     backgroundColor: "#7a67ff",
     margin: 10,
     borderRadius: 10,
     paddingVertical: 12,
+    paddingHorizontal: 40,
     alignItems: "center",
   },
   addIndoorText: {
@@ -300,7 +478,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   cancelButton: {
-    backgroundColor: "#FF5C5C",
+    backgroundColor: "#D51339",
     borderRadius: 5,
     paddingVertical: 8,
     paddingHorizontal: 15,
@@ -315,16 +493,96 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: "transparent",
-    
+    borderColor: "#000",
+    borderWidth:1,
     borderRadius: 5,
-    marginTop: 10,
-    
+    paddingVertical: 6,
+    paddingHorizontal: 15,
+    marginTop:10,
   },
   LogoutBtn:{
     color: "#000",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "bold",
     backgroundColor:'transparent',
+  },
+  noBookings: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  noBookingsText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalCancelButton: {
+    backgroundColor: '#ccc',
+    padding: 10,
+    borderRadius: 10,
+    width: '45%',
+    alignItems: 'center',
+  },
+  modalUpdateButton: {
+    backgroundColor: '#7a67ff',
+    padding: 10,
+    borderRadius: 10,
+    width: '45%',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  profileButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  editProfileButton: {
+    backgroundColor: "#7a67ff",
+    borderRadius: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    marginRight: 10,
+    marginTop:10,
+  },
+  editProfileText: {
+    color: "#FFF",
+    fontSize: 14,
+  },
+  addAndViewIndoorButtonContainer:{
+    flexDirection: "row",
+    justifyContent: "space-evenly",
   }
 });
 

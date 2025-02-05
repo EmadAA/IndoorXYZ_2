@@ -11,7 +11,7 @@ const DatePicker = ({ onDateSelect }) => {
 
     for (let i = 0; i < 30; i++) {
       const date = new Date(today);
-      date.setDate(today.getDate() + i);
+      date.setDate(today.getDate() + i +1);
 
       const day = date.toLocaleString('en-US', { weekday: 'short' });
       const month = date.toLocaleString('en-US', { month: 'short' });

@@ -34,10 +34,10 @@
     "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {
-    "@react-native-community/cli": "latest",
     "@babel/core": "^7.20.0",
-    "typescript": "^5.3.3",
-    "@types/react": "~18.3.12"
+    "@react-native-community/cli": "latest",
+    "@types/react": "~18.3.12",
+    "typescript": "^5.3.3"
   },
   "private": true,
   "description": "��#\u0000 \u0000I\u0000n\u0000d\u0000o\u0000o\u0000r\u0000X\u0000Y\u0000Z\u0000\r\u0000 \u0000",

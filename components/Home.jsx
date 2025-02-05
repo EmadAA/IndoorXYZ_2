@@ -60,8 +60,8 @@ const Home = () => {
   const renderBooking = ({ item }) => {
     const imageSource = item.image
       ? { uri: item.image }
-      : require('../assets/play.jpg');
-
+      : require('../assets/turf.jpg');
+  
     return (
       <View style={styles.playgroundCard}>
         <Image source={imageSource} style={styles.playgroundImage} />
@@ -72,25 +72,20 @@ const Home = () => {
           </View>
           <View style={styles.infoRight}>
             <Text style={styles.nameText}>{item.name}</Text>
-            <TouchableOpacity onPress={() => handleNavigateToBooking(item.id)}>
-              <Text
-                style={[
-                  styles.statusText,
-                  {
-                    backgroundColor:
-                      item.status === 'Available' ? '#4CAF50' : '#F44336',
-                  },
-                ]}
-              >
-                {item.status}
-              </Text>
+            
+            {/* Book Now Button */}
+            <TouchableOpacity
+              style={styles.bookNowButton}
+              onPress={() => handleNavigateToBooking(item.id)}
+            >
+              <Text style={styles.bookNowButtonText}>Book Now</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
     );
   };
-
+  
   // Add Header Component for FlatList
   const renderHeader = () => (
     <View>
@@ -213,7 +208,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 20,
     marginBottom: 25,
-    height: 360,
+    height: 380,
     overflow: 'hidden',
   },
   playgroundImage: {
@@ -233,17 +228,6 @@ const styles = StyleSheet.create({
   infoRight: {
     alignItems: 'flex-end',
     flex: 1,
-  },
-  statusText: {
-    fontSize: 17,
-    marginTop: 5,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: '#4CAF50',
-    color: '#fff',
-    borderRadius: 8,
-    textAlign: 'center',
-    overflow: 'hidden',
   },
   locationText: {
     fontSize: 16,
@@ -270,6 +254,20 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     fontSize: 16,
     color: '#666',
+  },
+  bookNowButton: {
+    backgroundColor: '#7A67FF',  
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  bookNowButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather'; // Import Feather Icons for eye icon
 import { auth, db } from '../Config/Firebase';
 
 const Signup = () => {
@@ -19,31 +20,53 @@ const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false); // State for confirm password visibility
 
   // Handle sign-up action
   const handleSignUp = async () => {
-    if (!email || !password || !name || !phone) {
+    // Validate input fields
+    if (!email || !password || !name || !phone || !confirmPassword) {
       Alert.alert('Error', 'Please fill out all fields.');
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password should be at least 6 characters long.');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password should be at least 8 characters long.');
       return;
     }
-  
+
+    // Enhanced password validation: Should include at least one number, one letter, one special character, and one uppercase letter
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])(?!.*\s)(?=.*[A-Z]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      Alert.alert('Error', 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
+      return;
+    }
+
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match.');
+      return;
+    }
+
+    // Phone number validation
     if (!/^\d{10,15}$/.test(phone)) {
       Alert.alert('Error', 'Please enter a valid phone number.');
       return;
     }
-  
+
     setIsLoading(true);
     try {
+      // Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-  
+
+      // Send email verification
+      await sendEmailVerification(user);
+
       // Save user data to Firestore, including phone number
       const userDocRef = doc(db, 'users', user.uid);
       await setDoc(userDocRef, {
@@ -57,30 +80,36 @@ const Signup = () => {
         location: '',
         isNewUser: true,
         userType: 'regular',
+        emailVerified: false,
       });
 
-
-   Alert.alert('Success', 'Account created successfully!', [
-      { text: 'OK', onPress: () => navigation.navigate('Login') },
-    ]);
-  } catch (error) {
-    let errorMessage = 'An error occurred during sign up.';
-    switch (error.code) {
-      case 'auth/email-already-in-use':
-        errorMessage = 'This email is already registered.';
-        break;
-      case 'auth/invalid-email':
-        errorMessage = 'Please enter a valid email address.';
-        break;
-      case 'auth/weak-password':
-        errorMessage = 'Please choose a stronger password.';
-        break;
+      // Show success alert with email verification notice
+      Alert.alert(
+        'Success', 
+        'Account created successfully! Please check your email to verify your account.', 
+        [{ 
+          text: 'OK', 
+          onPress: () => navigation.navigate('Login') 
+        }]
+      );
+    } catch (error) {
+      let errorMessage = 'An error occurred during sign up.';
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'This email is already registered.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Please enter a valid email address.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Please choose a stronger password.';
+          break;
+      }
+      Alert.alert('Sign Up Failed', errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-    Alert.alert('Sign Up Failed', errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -123,6 +152,7 @@ const Signup = () => {
             />
           </View>
           
+          {/* Phone Number Input */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -134,17 +164,53 @@ const Signup = () => {
               editable={!isLoading}
             />
           </View>
+
           {/* Password Input */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Password (minimum 6 characters)"
+              placeholder="Password (minimum 8 characters, with uppercase, number, and special character)"
               placeholderTextColor="#bbb"
-              secureTextEntry
+              secureTextEntry={!passwordVisible}
               value={password}
               onChangeText={setPassword}
               editable={!isLoading}
             />
+            {/* Eye Icon for password visibility */}
+            <TouchableOpacity
+              onPress={() => setPasswordVisible(!passwordVisible)}
+              style={styles.eyeIconContainer}
+            >
+              <Icon 
+                name={passwordVisible ? 'eye-off' : 'eye'} 
+                size={24} 
+                color="#bbb" 
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Confirm Password Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              placeholderTextColor="#bbb"
+              secureTextEntry={!confirmPasswordVisible}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              editable={!isLoading}
+            />
+            {/* Eye Icon for confirm password visibility */}
+            <TouchableOpacity
+              onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+              style={styles.eyeIconContainer}
+            >
+              <Icon 
+                name={confirmPasswordVisible ? 'eye-off' : 'eye'} 
+                size={24} 
+                color="#bbb" 
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Sign Up Button */}
@@ -226,6 +292,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333',
+  },
+  eyeIconContainer: {
+    padding: 5,
+    position: 'absolute',
+    right: 10,
   },
   signUpButton: {
     backgroundColor: '#8A5EFF',

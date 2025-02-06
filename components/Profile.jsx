@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import BottomNavbar from "../components/BottomNavbar";
 import { db } from '../Config/Firebase';
 
@@ -186,7 +187,6 @@ const Profile = () => {
     setEditedProfile({
       name: userData?.name || '',
       phone: userData?.phone || '',
-      bkashNumber: userData?.bkashNumber || ''
     });
     setEditProfileModalVisible(true);
   };
@@ -214,7 +214,7 @@ const Profile = () => {
                 onPress={handleLogout}
                 
               >
-                <Text style={styles.LogoutBtn}>Logout</Text>
+                <Text style={styles.LogoutBtn}><Icon name="sign-out" size={16} color="#000" />Logout</Text>
               </TouchableOpacity>
             </View>
       </View>
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     height: 180,
   },
   profileImage: {
-    width: 130,
+    width: 120,
     height: 170,
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   addIndoorButton: {
     backgroundColor: "#7a67ff",
     margin: 10,
-    borderRadius: 10,
+    borderRadius: 5,
     paddingVertical: 12,
     paddingHorizontal: 40,
     alignItems: "center",
@@ -463,8 +463,8 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   priceText: {
-    fontSize: 14,
-    color: "#7a67ff",
+    fontSize: 16,
+    color: "#000",
   },
   buttonRow: {
     flexDirection: "row",
@@ -579,6 +579,7 @@ const styles = StyleSheet.create({
   editProfileText: {
     color: "#FFF",
     fontSize: 14,
+    fontWeight: "bold",
   },
   addAndViewIndoorButtonContainer:{
     flexDirection: "row",

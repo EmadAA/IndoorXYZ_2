@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   selected: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#7A67FF',
   },
   dateText: {
     color: '#fff',

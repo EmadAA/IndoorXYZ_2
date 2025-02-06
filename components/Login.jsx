@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
@@ -10,13 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { auth } from '../Config/Firebase'; // Adjust the path to your firebase.js
-
+import Icon from 'react-native-vector-icons/Feather'; // Import Feather Icons for eye icon
+import { auth } from '../Config/Firebase';
 
 const Login = () => {
-  const navigation = useNavigation(); // Initialize navigation
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);  // State for password visibility
 
   // Handle login action
   const handleLogin = async () => {
@@ -71,10 +72,21 @@ const Login = () => {
             style={styles.input}
             placeholder="Password"
             placeholderTextColor="#bbb"
-            secureTextEntry
+            secureTextEntry={!passwordVisible}
             value={password}
             onChangeText={setPassword} // Bind password state
           />
+          {/* Eye Icon for password visibility */}
+          <TouchableOpacity
+            onPress={() => setPasswordVisible(!passwordVisible)}
+            style={styles.eyeIconContainer}
+          >
+            <Icon 
+              name={passwordVisible ? 'eye-off' : 'eye'} 
+              size={24} 
+              color="#bbb" 
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Remember Me and Forgot Password */}
@@ -152,6 +164,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333',
+  },
+  eyeIconContainer: {
+    padding: 5,
+    position: 'absolute',
+    right: 10,
   },
   row: {
     flexDirection: 'row',

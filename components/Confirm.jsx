@@ -187,8 +187,13 @@ const Confirm = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Select Time Slot</Text>
           <TimePicker onTimeSelect={handleTimeChange} />
-          <Text style={styles.timing}>From: {timeSlot.from || 'Not selected'}</Text>
-          <Text style={styles.timing}>To: {timeSlot.to || 'Not selected'}</Text>
+          <View style={styles.timing}>
+          <Text style={styles.timingText}>From: {timeSlot.from || 'Not selected'}</Text>
+          <Text style={styles.timingText}>To: {timeSlot.to || 'Not selected'}</Text>
+          </View>
+        </View>
+        <View>
+          
         </View>
         <View style={styles.inputContainer}>
           <TextInput
@@ -337,9 +342,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   timing: {
-    fontSize: 14,
-    marginTop: 5,
-    color: '#555',
+    
+  },
+  timingText:{
+    fontSize: 18,
+
   }
 });
 

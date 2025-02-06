@@ -88,10 +88,12 @@ const ViewOrder = () => {
                   </View>
                   <View style={styles.indoorNameContainer}>
                     <Text style={styles.indoorNameText}>{booking.IndoorName}</Text>
+                    
                   </View>
                 </View>
                 <View style={styles.detailsRow}>
                   <Text style={styles.indoorName}>{booking.name}</Text>
+                  <Text style={styles.indoorPhoneText}>{booking.phone || 'No phone'}</Text>
                   <Text style={styles.price}>৳{booking.cost}</Text>
                 </View>
                 <View style={styles.timeSlotContainer}>
@@ -188,8 +190,8 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   indoorNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',  // Changed from row to column for vertical stacking
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   indoorNameText: {
@@ -197,14 +199,17 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: 'bold',
   },
+  indoorPhoneText: { // Style for the phone number text
+    fontSize: 16,
+    color: '#000',
+  },
   detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',  
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   indoorName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   price: {
@@ -264,3 +269,4 @@ const styles = StyleSheet.create({
 });
 
 export default ViewOrder;
+

@@ -115,11 +115,11 @@ const Booking = () => {
     <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.header}>
-        <Image source={require('../assets/play.jpg')} style={styles.logo} />
-        <View style={styles.headerIcons}>
+        <Image source={require('../assets/turf.jpg')} style={styles.logo} />
+        {/* <View style={styles.headerIcons}>
           <Image source={require('../assets/icon.png')} style={styles.headerIcon} />
           <Image source={require('../assets/icon.png')} style={styles.headerIcon} />
-        </View>
+        </View> */}
       </View>
 
       {/* Owner Info Section */}
@@ -138,19 +138,12 @@ const Booking = () => {
             <TouchableOpacity style={styles.callButton} onPress={handleCall}>
               <Text style={styles.callButtonText}>Call</Text>
             </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.viewProfileButton} onPress={viewProfile}>
-              <Text style={styles.viewProfileButtonText}>View Profile</Text>
-            </TouchableOpacity> */}
           </View>
         </View>
       </View>
 
       {/* Booking Details Section */}
       <View style={styles.bookingDetails}>
-        {/* <View style={styles.dateTimeContainer}>
-          <Text style={styles.dateTimeLabel}>Date & Time</Text>
-          <Text>{new Date(indoorData.date).toLocaleString()}</Text>
-        </View> */}
         <Text style={styles.price}>
           ৳{indoorData.price}
           <Text style={styles.priceCurrency}>/hr</Text>
@@ -164,9 +157,6 @@ const Booking = () => {
           </View>
         </View>
         <Text style={styles.paymentInfo}>Bkash/Nagad: {indoorData.phone}</Text>
-        <View style={styles.availabilityBadge}>
-          <Text style={styles.availabilityText}>{indoorData.status}</Text>
-        </View>
         <TouchableOpacity style={styles.bookNowButton} onPress={handleBooking}>
           <Text style={styles.bookNowButtonText}>Book Now</Text>
         </TouchableOpacity>
@@ -257,8 +247,8 @@ const Booking = () => {
     
     callButton: {
       backgroundColor: '#7A67FF',
-      borderRadius: 41,
-      paddingVertical: 8,
+      borderRadius: 10,
+      paddingVertical: 15,
       paddingHorizontal: 150,
       textAlign: 'center',
     },
@@ -266,17 +256,6 @@ const Booking = () => {
       color: '#fff',
       fontSize: 16,
       fontWeight: '500',
-    },
-    viewProfileButton: {
-      borderWidth: 1,
-      borderColor: '#c2c6ff',
-      borderRadius: 34,
-      paddingVertical: 8,
-      paddingHorizontal: 44,
-    },
-    viewProfileButtonText: {
-      color: 'rgba(0, 0, 0, 0.8)',
-      fontSize: 16,
     },
     bookingDetails: {
       backgroundColor: '#fff',
@@ -336,23 +315,9 @@ const Booking = () => {
       color: '#1e1e1e',
       marginBottom: 15,
     },
-    availabilityBadge: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      backgroundColor: '#009934',
-      borderRadius: 32,
-      paddingVertical: 4,
-      paddingHorizontal: 10,
-    },
-    availabilityText: {
-      color: '#fff',
-      fontSize: 12,
-      textTransform: 'capitalize',
-    },
     bookNowButton: {
       backgroundColor: '#7A67FF',
-      borderRadius: 15,
+      borderRadius: 7,
       paddingVertical: 15,
       paddingHorizontal: 20,
       alignItems: 'center',

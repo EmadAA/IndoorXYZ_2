@@ -1,7 +1,7 @@
 import { getAuth } from 'firebase/auth';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { db } from '../Config/Firebase';
 import BottomNavbar from './BottomNavbar';
 
@@ -61,7 +61,6 @@ const BookingList = () => {
         if (booking.id === bookingId) {
           if (timeRemaining <= 0) {
             clearInterval(intervalIds[bookingId]);
-            
             return {
               ...booking, 
               timeRemaining: 0, 
@@ -85,10 +84,42 @@ const BookingList = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleCancel = (bookingId) => {
+  const handleCancel = async (bookingId) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (booking && !booking.isExpired) {
-      console.log('Cancel booking:', bookingId);
+      try {
+        Alert.alert(
+          "Cancel Booking",
+          "Are you sure you want to cancel this booking?",
+          [
+            {
+              text: "No",
+              style: "cancel"
+            },
+            {
+              text: "Yes",
+              onPress: async () => {
+                // Delete from indoorBookings collection
+                const bookingRef = doc(db, 'indoorBookings', bookingId);
+                await deleteDoc(bookingRef);
+                
+                // Clear the interval for this booking
+                if (intervalIds[bookingId]) {
+                  clearInterval(intervalIds[bookingId]);
+                  const newIntervalIds = { ...intervalIds };
+                  delete newIntervalIds[bookingId];
+                  setIntervalIds(newIntervalIds);
+                }
+
+                Alert.alert("Success", "Booking cancelled successfully");
+              }
+            }
+          ]
+        );
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+        Alert.alert("Error", "Failed to cancel booking. Please try again.");
+      }
     }
   };
 
@@ -101,6 +132,7 @@ const BookingList = () => {
         ) : (
           bookings.map((booking) => (
             <View key={booking.id} style={styles.card}>
+              
               <View style={styles.contentContainer}>
                 <View style={styles.nameandlocation}>
                   <View style={styles.locationContainer}>

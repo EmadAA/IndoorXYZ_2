@@ -1,7 +1,7 @@
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { db } from '../Config/Firebase';
 
 const ViewOrder = () => {
@@ -26,16 +26,18 @@ const ViewOrder = () => {
           const bookingData = bookingDoc.data();
           const bookingReference = bookingDoc.data().bookingReference;
 
-          // Fetch indoor booking details based on bookingReference
-          const indoorBookingDetails = await fetchIndoorBookingDetails(bookingReference);
-          return {
+          const indoorBookings = await fetchIndoorBookingDetails(bookingReference);
+          // Map each indoor booking to include the main booking data
+          return indoorBookings.map(indoorBooking => ({
             ...bookingData,
             id: bookingDoc.id,
-            ...indoorBookingDetails
-          };
+            ...indoorBooking
+          }));
         });
 
-        const processedBookings = await Promise.all(bookingDetailsPromises);
+        const nestedBookings = await Promise.all(bookingDetailsPromises);
+        // Flatten the array of arrays into a single array of bookings
+        const processedBookings = nestedBookings.flat();
         setBookings(processedBookings);
       } catch (error) {
         console.error('Error fetching bookings:', error);
@@ -53,21 +55,59 @@ const ViewOrder = () => {
 
       if (indoorBookingSnapshot.empty) {
         console.error(`No indoor booking found for reference: ${bookingReference}`);
-        return {};
+        return [];
       }
 
-      return indoorBookingSnapshot.docs[0].data();
+      // Return all documents instead of just the first one
+      return indoorBookingSnapshot.docs.map(doc => ({
+        ...doc.data(),
+        indoorBookingId: doc.id // Include the indoor booking document ID for deletion
+      }));
     } catch (error) {
       console.error('Error fetching indoor booking details:', error);
-      return {};
+      return [];
     }
   };
 
-  const handleCancel = (bookingId) => {
-    const booking = bookings.find((b) => b.id === bookingId);
-    if (booking) {
-      console.log('Cancel booking:', bookingId);
-      // Implement cancellation logic here (e.g., update the status to 'cancelled')
+  const handleCancel = async (bookingId, indoorBookingId) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking && !booking.isExpired) {
+      try {
+        Alert.alert(
+          "Cancel Booking",
+          "Are you sure you want to cancel this booking?",
+          [
+            {
+              text: "No",
+              style: "cancel"
+            },
+            {
+              text: "Yes",
+              onPress: async () => {
+                try {
+                  // Delete the specific indoor booking using its ID
+                  await deleteDoc(doc(db, 'indoorBookings', indoorBookingId));
+                  
+                  // Update local state
+                  setBookings(prevBookings => 
+                    prevBookings.filter(b => 
+                      !(b.id === bookingId && b.indoorBookingId === indoorBookingId)
+                    )
+                  );
+
+                  Alert.alert("Success", "Booking cancelled successfully");
+                } catch (error) {
+                  console.error('Error during cancellation:', error);
+                  Alert.alert("Error", "Failed to cancel booking. Please try again.");
+                }
+              }
+            }
+          ]
+        );
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+        Alert.alert("Error", "Failed to cancel booking. Please try again.");
+      }
     }
   };
 
@@ -79,7 +119,7 @@ const ViewOrder = () => {
           <Text style={styles.noBookings}>No orders found</Text>
         ) : (
           bookings.map((booking) => (
-            <View key={booking.id} style={styles.card}>
+            <View key={`${booking.id}-${booking.indoorBookingId}`} style={styles.card}>
               <View style={styles.contentContainer}>
                 <View style={styles.nameandlocation}>
                   <View style={styles.locationContainer}>
@@ -88,7 +128,6 @@ const ViewOrder = () => {
                   </View>
                   <View style={styles.indoorNameContainer}>
                     <Text style={styles.indoorNameText}>{booking.IndoorName}</Text>
-                    
                   </View>
                 </View>
                 <View style={styles.detailsRow}>
@@ -111,7 +150,7 @@ const ViewOrder = () => {
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity
                       style={[styles.button, styles.cancelButton]}
-                      onPress={() => handleCancel(booking.id)}
+                      onPress={() => handleCancel(booking.id, booking.indoorBookingId)}
                     >
                       <Text style={styles.buttonText}>Cancel</Text>
                     </TouchableOpacity>
@@ -132,6 +171,7 @@ const ViewOrder = () => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -190,7 +230,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   indoorNameContainer: {
-    flexDirection: 'column',  // Changed from row to column for vertical stacking
+    flexDirection: 'column',
     alignItems: 'flex-start',
     marginBottom: 8,
   },
@@ -199,7 +239,7 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: 'bold',
   },
-  indoorPhoneText: { // Style for the phone number text
+  indoorPhoneText: {
     fontSize: 16,
     color: '#000',
   },
@@ -269,4 +309,3 @@ const styles = StyleSheet.create({
 });
 
 export default ViewOrder;
-

@@ -175,11 +175,37 @@ const Profile = () => {
   const handleLogout = async () => {
     const auth = getAuth();
     try {
-      await signOut(auth);
-      navigation.navigate('Login');
+      // Ensure user is signed in before attempting logout
+      if (auth.currentUser) {
+        await signOut(auth);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      } else {
+        // If no current user, force navigation to login
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      }
     } catch (error) {
-      console.error('Error logging out:', error);
-      Alert.alert('Error', 'Failed to log out');
+      console.error('Logout error:', error);
+      
+      // More specific error handling
+      if (error.code === 'auth/invalid-user-token') {
+        // Token is invalid, force logout and redirect
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      } else {
+        Alert.alert(
+          'Logout Error', 
+          'Unable to log out. Please try again or restart the app.', 
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
 

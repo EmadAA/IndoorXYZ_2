@@ -36,8 +36,11 @@ const ViewOrder = () => {
         });
 
         const nestedBookings = await Promise.all(bookingDetailsPromises);
-        // Flatten the array of arrays into a single array of bookings
-        const processedBookings = nestedBookings.flat();
+        // Flatten and sort the bookings by createdAt
+        const processedBookings = nestedBookings
+          .flat()
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          
         setBookings(processedBookings);
       } catch (error) {
         console.error('Error fetching bookings:', error);
@@ -58,17 +61,18 @@ const ViewOrder = () => {
         return [];
       }
 
-      // Return all documents instead of just the first one
-      return indoorBookingSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        indoorBookingId: doc.id // Include the indoor booking document ID for deletion
-      }));
+      // Return all documents sorted by createdAt
+      return indoorBookingSnapshot.docs
+        .map(doc => ({
+          ...doc.data(),
+          indoorBookingId: doc.id
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } catch (error) {
       console.error('Error fetching indoor booking details:', error);
       return [];
     }
   };
-
   const handleCancel = async (bookingId, indoorBookingId) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (booking && !booking.isExpired) {
@@ -145,6 +149,7 @@ const ViewOrder = () => {
                 </View>
                 <View style={styles.paymentInfo}>
                   <Text style={styles.paymentType}>{`Payment: ${booking.paymentType}`}</Text>
+                  <Text style={styles.paymentType}>{`TranxID: ${booking.tranxID}`}</Text>
                 </View>
                 {!booking.isExpired && (
                   <View style={styles.buttonContainer}>

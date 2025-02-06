@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -17,8 +16,8 @@ import SearchSection from './SearchSection';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('home');
-  const [activeFilter, setActiveFilter] = useState('All');
   const [bookings, setBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
@@ -38,10 +37,11 @@ const Home = () => {
         price: doc.data().price || '0',
         phone: doc.data().phone || 'N/A',
         date: doc.data().date || '',
-        status: doc.data().status || 'Available', // Ensure status is dynamically fetched
+        status: doc.data().status || 'Available',
       }));
 
       setBookings(bookingsList);
+      setFilteredBookings(bookingsList);
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {
@@ -52,6 +52,29 @@ const Home = () => {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  const handleSearch = (searchParams) => {
+    const { location, costPerHour } = searchParams;
+    
+    let filtered = [...bookings];
+
+    // Filter by location if provided
+    if (location) {
+      filtered = filtered.filter(booking => 
+        booking.location.toLowerCase().includes(location)
+      );
+    }
+
+    // Filter by cost if provided
+    if (costPerHour > 0) {
+      filtered = filtered.filter(booking => {
+        const bookingPrice = parseInt(booking.price) || 0;
+        return bookingPrice <= costPerHour;
+      });
+    }
+
+    setFilteredBookings(filtered);
+  };
 
   const handleNavigateToBooking = (bookingId) => {
     navigation.navigate('Booking', { bookingId });
@@ -72,8 +95,6 @@ const Home = () => {
           </View>
           <View style={styles.infoRight}>
             <Text style={styles.nameText}>{item.name}</Text>
-            
-            {/* Book Now Button */}
             <TouchableOpacity
               style={styles.bookNowButton}
               onPress={() => handleNavigateToBooking(item.id)}
@@ -85,66 +106,37 @@ const Home = () => {
       </View>
     );
   };
-  
-  // Add Header Component for FlatList
+
   const renderHeader = () => (
     <View>
-      {/* Search Section */}
       <View style={styles.searchSection}>
-        <SearchSection />
+        <SearchSection onSearch={handleSearch} />
       </View>
-
-      {/* Filter Section */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.filterSection}>
-          {['All', 'Football', 'Cricket', 'Badminton'].map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              onPress={() => setActiveFilter(filter)}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  activeFilter === filter && styles.activeFilter,
-                ]}
-              >
-                {filter}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.logoText}>
           INDOOR <Text style={styles.logoHighlight}>XYZ</Text>
         </Text>
-        {/* <TouchableOpacity>
-          <Text style={styles.menuIcon}>☰</Text>
-        </TouchableOpacity> */}
       </View>
 
-      {/* FlatList as Main Scroller */}
       {loading ? (
         <ActivityIndicator size="large" color="#4CAF50" style={styles.loader} />
-      ) : bookings.length === 0 ? (
+      ) : filteredBookings.length === 0 ? (
         <Text style={styles.noPlaygroundsText}>No bookings available</Text>
       ) : (
         <FlatList
-          data={bookings}
+          data={filteredBookings}
           renderItem={renderBooking}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader} // Add the Search and Filter sections here
+          ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.playgroundsSection}
         />
       )}
 
-      {/* Bottom Navigation */}
       <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
     </View>
   );
@@ -174,11 +166,9 @@ const styles = StyleSheet.create({
   menuIcon: {
     fontSize: 24,
   },
-  // searchSection: {
-  //   paddingHorizontal: 20,
-  //   paddingVertical: 10,
-  //   backgroundColor: '#fff',
-  // },
+  searchSection: {
+  marginBottom: 20,
+  },
   filterSection: {
     flexDirection: 'row',
     justifyContent: 'space-around',

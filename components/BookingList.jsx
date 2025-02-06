@@ -25,13 +25,18 @@ const BookingList = () => {
       const userBookings = snapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
-        timeRemaining: 1200,
+        timeRemaining: 3600, // Time set to 60 minutes
         isExpired: false
       }));
-      setBookings(userBookings);
+      
+      const sortedBookings = userBookings.sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      
+      setBookings(sortedBookings);
 
       const newIntervalIds = {};
-      userBookings.forEach((booking) => {
+      sortedBookings.forEach((booking) => {
         newIntervalIds[booking.id] = startTimer(booking.id, booking.createdAt);
       });
       setIntervalIds(newIntervalIds);
@@ -54,7 +59,7 @@ const BookingList = () => {
   const updateTimeRemaining = (bookingId, createdAt) => {
     const now = new Date().getTime();
     const createdAtDate = new Date(createdAt).getTime();
-    const timeRemaining = 1200 - Math.floor((now - createdAtDate) / 1000);
+    const timeRemaining = 3600 - Math.floor((now - createdAtDate) / 1000);
 
     setBookings((prevBookings) =>
       prevBookings.map((booking) => {
@@ -99,11 +104,9 @@ const BookingList = () => {
             {
               text: "Yes",
               onPress: async () => {
-                // Delete from indoorBookings collection
                 const bookingRef = doc(db, 'indoorBookings', bookingId);
                 await deleteDoc(bookingRef);
                 
-                // Clear the interval for this booking
                 if (intervalIds[bookingId]) {
                   clearInterval(intervalIds[bookingId]);
                   const newIntervalIds = { ...intervalIds };
@@ -132,7 +135,6 @@ const BookingList = () => {
         ) : (
           bookings.map((booking) => (
             <View key={booking.id} style={styles.card}>
-              
               <View style={styles.contentContainer}>
                 <View style={styles.nameandlocation}>
                   <View style={styles.locationContainer}>

@@ -403,8 +403,8 @@ const Profile = () => {
         </Modal>
   
         {/* Bottom Navbar */}
-        <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
         
+        <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
       </ScrollView>
     );
   };
@@ -412,7 +412,6 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 50,
     backgroundColor: "#F8F8F8",
   },
   loadingContainer: {
@@ -572,7 +571,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalCancelButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#D51339',
     padding: 10,
     borderRadius: 10,
     width: '45%',

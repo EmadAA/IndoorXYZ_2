@@ -116,7 +116,7 @@ import { auth, db } from "../Config/Firebase";
 
   return (
     <View style={styles.container}>
-      <Image source={require("../assets/play.jpg")} style={styles.image} />
+      <Image source={require("../assets/turf.jpg")} style={styles.image} />
 
       <View style={styles.form}>
         <TextInput
@@ -172,6 +172,7 @@ import { auth, db } from "../Config/Firebase";
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 20,
     backgroundColor: "#fff",
   },
   image: {

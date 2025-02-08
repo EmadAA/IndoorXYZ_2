@@ -1,5 +1,9 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+const CONTACT_NUMBER = '01727199167';
+const handleContactUs = () => {
+  Linking.openURL(`tel:${CONTACT_NUMBER}`);
+};
 
 export default function WelcomePage({ navigation }) { // Added navigation prop
   return (
@@ -30,14 +34,15 @@ export default function WelcomePage({ navigation }) { // Added navigation prop
         onPress={() => navigation.navigate('Profile')} // Navigate to AddPlayground
       >
         <Text style={styles.listButtonText}>Go To Profile</Text>
-      </TouchableOpacity>
-
+      </TouchableOpacity >
+<TouchableOpacity onPress={handleContactUs}>
       <Text style={styles.footerText}>
         Did You Face Any Issue?{' '}
         <Text style={styles.contactLink} onPress={() => alert('Contact us!')}>
           Contact Us
         </Text>
       </Text>
+      </TouchableOpacity>
     </View>
   );
 }

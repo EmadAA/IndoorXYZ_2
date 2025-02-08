@@ -1,9 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
-import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
   Alert,
   Image,
+  Linking,
   StyleSheet,
   Text,
   TextInput,
@@ -19,6 +20,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const CONTACT_NUMBER = '01727199167';
 
   // Handle login action
   const handleLogin = async () => {
@@ -32,8 +34,13 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
-        // User is not verified, show alert with resend option
+      // Get user metadata to check if they're a new user
+      const metadata = user.metadata;
+      const isNewUser = metadata.creationTime === metadata.lastSignInTime;
+
+      // Only check email verification for new users
+      if (isNewUser && !user.emailVerified) {
+        // New user who needs to verify email
         Alert.alert(
           'Email Not Verified',
           'Please verify your email before logging in. Would you like us to resend the verification email?',
@@ -58,10 +65,10 @@ const Login = () => {
             },
           ]
         );
-        // Sign out the user since they're not verified
+        // Sign out the new unverified user
         await auth.signOut();
       } else {
-        // User is verified, proceed with login
+        // Existing user or new user with verified email - proceed with login
         Alert.alert('Success', 'Logged in successfully!');
         navigation.navigate('WelcomePage');
       }
@@ -94,8 +101,26 @@ const Login = () => {
     navigation.navigate('Signup');
   };
 
-  const handleForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email to reset your password.');
+      return;
+    }
+  
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(
+        'Password Reset Email Sent',
+        'Check your inbox and follow the instructions to reset your password.'
+      );
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Reset Failed', error.message);
+    }
+  };
+
+  const handleContactUs = () => {
+    Linking.openURL(`tel:${CONTACT_NUMBER}`);
   };
 
   return (
@@ -150,11 +175,9 @@ const Login = () => {
         </View>
 
         {/* Remember Me and Forgot Password */}
-        <View style={styles.row}>
-          <TouchableOpacity onPress={handleForgotPassword}>
-            <Text style={styles.link}>Forget Password?</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={handleForgotPassword}>
+          <Text style={styles.row}>Forget Password?</Text>
+        </TouchableOpacity>
 
         {/* Login Button */}
         <TouchableOpacity 
@@ -180,7 +203,7 @@ const Login = () => {
         </TouchableOpacity>
 
         {/* Contact Support */}
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleContactUs}>
           <Text style={styles.contactText}>
             Did You Face Any Issue? <Text style={styles.contactLink}>Contact US</Text>
           </Text>

@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import {
   Alert,
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,6 +26,7 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false); // State for confirm password visibility
+  const CONTACT_NUMBER = '01727199167';
 
   // Handle sign-up action
   const handleSignUp = async () => {
@@ -110,6 +112,11 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+
+  const handleContactUs = () => {
+    Linking.openURL(`tel:${CONTACT_NUMBER}`);
+  };
+
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -237,7 +244,7 @@ const Signup = () => {
           </TouchableOpacity>
 
           {/* Contact Support */}
-          <TouchableOpacity disabled={isLoading}>
+          <TouchableOpacity disabled={isLoading} onPress={handleContactUs}>
             <Text style={styles.contactText}>
               Did You Face Any Issue? <Text style={styles.contactLink}>Contact US</Text>
             </Text>

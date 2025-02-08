@@ -120,20 +120,47 @@ const Confirm = () => {
       setTimeSlot(newTimeSlot);
     }
   };
-
   const handleSubmit = async () => {
     const auth = getAuth();
     const userId = auth.currentUser?.uid;
-
-    // Modify validation for TranxID based on payment type
-    const tranxIDValidation = paymentType === 'Full Payment' ? tranxID.trim() === '' : false;
-
-    if (!selectedDate || !timeSlot.from || !timeSlot.to || !name.trim() ||
-        !phone.trim() || phone.length < 10 || tranxIDValidation || !userId) {
-      Alert.alert('Error', 'Please fill all fields correctly.');
+  
+    // Check if phone number is empty
+    if (!phone.trim()) {
+      Alert.alert('Error', 'Phone number cannot be empty.');
       return;
     }
-
+  
+    // Check if phone number format is valid
+    if (phone.length !== 11 || !phone.startsWith("01")) {
+      Alert.alert('Error', 'Phone number must start with "01" and be exactly 11 digits.');
+      return;
+    }
+  
+    // Check if date is selected
+    if (!selectedDate) {
+      Alert.alert('Error', 'Please select a date.');
+      return;
+    }
+  
+    // Check if time slot is selected
+    if (!timeSlot.from || !timeSlot.to) {
+      Alert.alert('Error', 'Please select a valid time slot.');
+      return;
+    }
+  
+    // Check if TranxID is required and missing
+    const tranxIDValidation = paymentType === 'Full Payment' ? tranxID.trim() === '' : false;
+    if (tranxIDValidation) {
+      Alert.alert('Error', 'Transaction ID is required for Full Payment.');
+      return;
+    }
+  
+    // Check if user is logged in
+    if (!userId) {
+      Alert.alert('Error', 'User not authenticated.');
+      return;
+    }
+  
     const isAvailable = await checkSlotAvailability(selectedDate, timeSlot.from, timeSlot.to);
     if (!isAvailable) {
       Alert.alert(
@@ -143,7 +170,7 @@ const Confirm = () => {
       );
       return;
     }
-
+  
     const indoorBookingData = {
       date: selectedDate,
       fromTime: timeSlot.from,
@@ -162,7 +189,7 @@ const Confirm = () => {
       bookingReference: bookingData?.bookingReference || '',
       IndoorName: indoorName
     };
-
+  
     try {
       const docRef = await addDoc(collection(db, 'indoorBookings'), indoorBookingData);
       console.log('Booking added with ID: ', docRef.id);
@@ -172,6 +199,7 @@ const Confirm = () => {
       Alert.alert('Error', 'Error confirming booking.');
     }
   };
+  
 
   return (
     <KeyboardAvoidingView
@@ -204,14 +232,28 @@ const Confirm = () => {
           />
         </View>
         <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Your Number"
-            value={phone}
-            keyboardType="phone-pad"
-            onChangeText={setPhone}
-          />
-        </View>
+  <TextInput
+    style={styles.input}
+    placeholder="Enter Your Number"
+    value={phone}
+    keyboardType="phone-pad"
+    onChangeText={(text) => {
+      // Ensure only numbers are entered
+      const formattedText = text.replace(/[^0-9]/g, '');
+      
+      // Enforce 11-digit constraint and ensure it starts with "01"
+      if (formattedText.length <= 11) {
+        setPhone(formattedText);
+      }
+
+      if (formattedText.length === 11 && !formattedText.startsWith("01")) {
+        Alert.alert('Invalid Number', 'Phone number must start with "01" and be exactly 11 digits.');
+        setPhone(""); // Reset input if invalid
+      }
+    }}
+  />
+</View>
+
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Indoor Name</Text>
           <Text style={styles.nonEditableInput}>{"  " + indoorName}</Text>

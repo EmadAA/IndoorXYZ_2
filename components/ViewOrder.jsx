@@ -1,7 +1,7 @@
 import { getAuth } from 'firebase/auth';
 import { collection, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { db } from '../Config/Firebase';
 
 const ViewOrder = () => {
@@ -114,6 +114,9 @@ const ViewOrder = () => {
       }
     }
   };
+  const handleCall = () => {
+    Linking.openURL(`tel:${bookings.phone }`);
+  };
 
   return (
     <View style={styles.container}>
@@ -136,7 +139,9 @@ const ViewOrder = () => {
                 </View>
                 <View style={styles.detailsRow}>
                   <Text style={styles.indoorName}>{booking.name}</Text>
+                  <TouchableOpacity onPress={handleCall}> 
                   <Text style={styles.indoorPhoneText}>{booking.phone || 'No phone'}</Text>
+                  </TouchableOpacity>
                   <Text style={styles.price}>৳{booking.cost}</Text>
                 </View>
                 <View style={styles.timeSlotContainer}>

@@ -137,7 +137,9 @@ const Home = () => {
         />
       )}
 
-      <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
+     <View style={styles.bottomNavContainer} >
+     <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
+     </View>
     </View>
   );
 };
@@ -146,12 +148,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    // marginTop: 50,
     paddingTop:50,
     width: '100%',
   },
   header: {
-    // flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
@@ -259,6 +259,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  bottomNavContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    elevation: 8, // for Android shadow
+    shadowColor: '#000', // for iOS shadow
   },
 });
 

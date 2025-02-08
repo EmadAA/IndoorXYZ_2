@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -10,14 +10,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather'; // Import Feather Icons for eye icon
+import Icon from 'react-native-vector-icons/Feather';
 import { auth } from '../Config/Firebase';
 
 const Login = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [passwordVisible, setPasswordVisible] = useState(false);  // State for password visibility
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Handle login action
   const handleLogin = async () => {
@@ -26,19 +27,75 @@ const Login = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
-      // Firebase sign-in method
-      await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert('Success', 'Logged in successfully!');
-      navigation.navigate('WelcomePage'); // Adjust this to the name of the screen you want to navigate to
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        // User is not verified, show alert with resend option
+        Alert.alert(
+          'Email Not Verified',
+          'Please verify your email before logging in. Would you like us to resend the verification email?',
+          [
+            {
+              text: 'Resend Email',
+              onPress: async () => {
+                try {
+                  await sendEmailVerification(user);
+                  Alert.alert(
+                    'Verification Email Sent',
+                    'Please check your email and click the verification link.'
+                  );
+                } catch (error) {
+                  Alert.alert('Error', 'Failed to send verification email. Please try again later.');
+                }
+              },
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+          ]
+        );
+        // Sign out the user since they're not verified
+        await auth.signOut();
+      } else {
+        // User is verified, proceed with login
+        Alert.alert('Success', 'Logged in successfully!');
+        navigation.navigate('WelcomePage');
+      }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Login Failed', error.message);
+      let errorMessage = 'Login failed. Please try again.';
+      
+      // Handle specific Firebase error codes
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many failed attempts. Please try again later.';
+          break;
+      }
+      
+      Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignup = () => {
-    navigation.navigate('Signup'); // Navigate to your signup screen
+    navigation.navigate('Signup');
+  };
+
+  const handleForgotPassword = () => {
+    navigation.navigate('ForgotPassword');
   };
 
   return (
@@ -46,7 +103,7 @@ const Login = () => {
       {/* Header Logo */}
       <View style={styles.header}>
         <Image
-          source={require('../assets/Logo.png')} // Replace with your logo URL
+          source={require('../assets/Logo.png')}
           style={styles.logo}
         />
       </View>
@@ -62,7 +119,10 @@ const Login = () => {
             placeholder="Email (Ex. indoorxyz@gmail.com)"
             placeholderTextColor="#bbb"
             value={email}
-            onChangeText={setEmail} // Bind email state
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!isLoading}
           />
         </View>
 
@@ -74,9 +134,9 @@ const Login = () => {
             placeholderTextColor="#bbb"
             secureTextEntry={!passwordVisible}
             value={password}
-            onChangeText={setPassword} // Bind password state
+            onChangeText={setPassword}
+            editable={!isLoading}
           />
-          {/* Eye Icon for password visibility */}
           <TouchableOpacity
             onPress={() => setPasswordVisible(!passwordVisible)}
             style={styles.eyeIconContainer}
@@ -91,21 +151,31 @@ const Login = () => {
 
         {/* Remember Me and Forgot Password */}
         <View style={styles.row}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleForgotPassword}>
             <Text style={styles.link}>Forget Password?</Text>
           </TouchableOpacity>
         </View>
 
         {/* Login Button */}
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
+        <TouchableOpacity 
+          style={[styles.loginButton, isLoading && styles.disabledButton]} 
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          <Text style={styles.loginButtonText}>
+            {isLoading ? 'Logging in...' : 'Login'}
+          </Text>
         </TouchableOpacity>
 
         {/* Or Divider */}
         <Text style={styles.orText}>Or</Text>
 
         {/* Sign Up */}
-        <TouchableOpacity style={styles.googleButton} onPress={handleSignup}>
+        <TouchableOpacity 
+          style={styles.googleButton} 
+          onPress={handleSignup}
+          disabled={isLoading}
+        >
           <Text style={styles.googleButtonText}>Sign Up</Text>
         </TouchableOpacity>
 
@@ -188,6 +258,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  disabledButton: {
+    opacity: 0.7,
+  },
   loginButtonText: {
     color: '#fff',
     fontSize: 16,
@@ -207,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
   },
-  googleText: {
+  googleButtonText: {
     color: '#333',
     fontSize: 16,
     fontWeight: 'bold',

@@ -27,9 +27,9 @@ export default function WelcomePage({ navigation }) { // Added navigation prop
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.listButton}
-        onPress={() => navigation.navigate('AddPlayground')} // Navigate to AddPlayground
+        onPress={() => navigation.navigate('Profile')} // Navigate to AddPlayground
       >
-        <Text style={styles.listButtonText}>List Your Playground</Text>
+        <Text style={styles.listButtonText}>Go To Profile</Text>
       </TouchableOpacity>
 
       <Text style={styles.footerText}>

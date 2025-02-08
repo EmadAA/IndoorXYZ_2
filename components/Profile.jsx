@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -28,6 +29,10 @@ const Profile = () => {
   const [editedBooking, setEditedBooking] = useState(null);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [editedProfile, setEditedProfile] = useState(null);
+  const [pinModalVisible, setPinModalVisible] = useState(false);
+  const [pin, setPin] = useState('');
+  const CORRECT_PIN = '2668';
+  const CONTACT_NUMBER = '01727199167';
 
   useEffect(() => {
     fetchUserDataAndBookings();
@@ -43,7 +48,6 @@ const Profile = () => {
     }
 
     try {
-      // Fetch user data
       const userDocRef = doc(db, 'users', user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
@@ -51,7 +55,6 @@ const Profile = () => {
         setUserData(userDocSnap.data());
       }
 
-      // Fetch user's bookings from the main bookings collection
       const bookingsRef = collection(db, 'bookings');
       const q = query(bookingsRef, where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
@@ -74,17 +77,37 @@ const Profile = () => {
   };
 
   const handleNavigate = (screen) => {
-    setActiveTab('addIndoor');
-    navigation.navigate(screen);
+    if (screen === 'AddPlayground') {
+      setPinModalVisible(true);
+    } else {
+      setActiveTab('addIndoor');
+      navigation.navigate(screen);
+    }
+  };
+
+  const handlePinSubmit = () => {
+    if (pin === CORRECT_PIN) {
+      setPinModalVisible(false);
+      setPin('');
+      setActiveTab('addIndoor');
+      navigation.navigate('AddPlayground');
+    } else {
+      Alert.alert('Invalid PIN', 'Please enter the correct PIN to continue');
+      setPin('');
+    }
+  };
+
+  const handleContactUs = () => {
+    Linking.openURL(`tel:${CONTACT_NUMBER}`);
   };
 
   const handleEdit = (booking) => {
     setEditedBooking({
       ...booking,
-      number: booking.phone || '' // Ensure number is always included
+      number: booking.phone || ''
     });
     setEditModalVisible(true);
-  }
+  };
 
   const handleUpdateBooking = async () => {
     if (!editedBooking) return;
@@ -95,12 +118,10 @@ const Profile = () => {
         name: editedBooking.name,
         location: editedBooking.location,
         price: parseFloat(editedBooking.price),
-        phone: editedBooking.phone // Update to 'phone' to match your database
+        phone: editedBooking.phone
       });
   
-      // Refresh bookings
       await fetchUserDataAndBookings();
-      
       setEditModalVisible(false);
       Alert.alert('Success', 'Booking updated successfully');
     } catch (error) {
@@ -122,9 +143,7 @@ const Profile = () => {
         phone: editedProfile.phone,
       });
 
-      // Refresh user data
       await fetchUserDataAndBookings();
-      
       setEditProfileModalVisible(false);
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
@@ -147,12 +166,8 @@ const Profile = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Delete the booking document from Firestore
               await deleteDoc(doc(db, 'bookings', bookingId));
-              
-              // Refresh bookings after deletion
               await fetchUserDataAndBookings();
-              
               Alert.alert('Success', 'Indoor deleted successfully');
             } catch (error) {
               console.error('Error deleting indoor:', error);
@@ -164,18 +179,9 @@ const Profile = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8A5EFF" />
-      </View>
-    );
-  }
-
   const handleLogout = async () => {
     const auth = getAuth();
     try {
-      // Ensure user is signed in before attempting logout
       if (auth.currentUser) {
         await signOut(auth);
         navigation.reset({
@@ -183,7 +189,6 @@ const Profile = () => {
           routes: [{ name: 'Login' }],
         });
       } else {
-        // If no current user, force navigation to login
         navigation.reset({
           index: 0,
           routes: [{ name: 'Login' }],
@@ -192,9 +197,7 @@ const Profile = () => {
     } catch (error) {
       console.error('Logout error:', error);
       
-      // More specific error handling
       if (error.code === 'auth/invalid-user-token') {
-        // Token is invalid, force logout and redirect
         navigation.reset({
           index: 0,
           routes: [{ name: 'Login' }],
@@ -217,52 +220,58 @@ const Profile = () => {
     setEditProfileModalVisible(true);
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#8A5EFF" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
-      {/* Profile Section */}
       <View style={styles.profileCard}>
         <Image
           source={require('../assets/profilePicture.jpg')}
           style={styles.profileImage}
         />
-       <View style={styles.profileDetails}>
-            <Text style={styles.name}>{ userData?.name || 'User'}</Text>
-            <Text style={styles.phone}>{userData?.phone || 'No phone number'}</Text>
-            <View style={styles.profileButtonRow}>
-              <TouchableOpacity 
-                style={styles.editProfileButton} 
-                onPress={handleEditProfile}
-              >
-                <Text style={styles.editProfileText}>Edit Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.logoutButton} 
-                onPress={handleLogout}
-                
-              >
-                <Text style={styles.LogoutBtn}><Icon name="sign-out" size={16} color="#000" />Logout</Text>
-              </TouchableOpacity>
-            </View>
-      </View>
+        <View style={styles.profileDetails}>
+          <Text style={styles.name}>{userData?.name || 'User'}</Text>
+          <Text style={styles.phone}>{userData?.phone || 'No phone number'}</Text>
+          <View style={styles.profileButtonRow}>
+            <TouchableOpacity 
+              style={styles.editProfileButton} 
+              onPress={handleEditProfile}
+            >
+              <Text style={styles.editProfileText}>Edit Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.logoutButton} 
+              onPress={handleLogout}
+            >
+              <Text style={styles.LogoutBtn}>
+                <Icon name="sign-out" size={16} color="#000" /> Logout
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
-      {/* Add Indoor Button */}
       <View style={styles.addAndViewIndoorButtonContainer}> 
-      <TouchableOpacity 
-        style={styles.addIndoorButton} 
-        onPress={() => handleNavigate('AddPlayground')}
-      >
-        <Text style={styles.addIndoorText}>Add Indoor</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.addIndoorButton} 
-        onPress={() => handleNavigate('ViewOrder')}
-      >
-        <Text style={styles.addIndoorText}>View Orders</Text>
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.addIndoorButton} 
+          onPress={() => handleNavigate('AddPlayground')}
+        >
+          <Text style={styles.addIndoorText}>Add Indoor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.addIndoorButton} 
+          onPress={() => handleNavigate('ViewOrder')}
+        >
+          <Text style={styles.addIndoorText}>View Orders</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Booking Cards */}
       {bookings.length === 0 ? (
         <View style={styles.noBookings}>
           <Text style={styles.noBookingsText}>No bookings found</Text>
@@ -295,119 +304,166 @@ const Profile = () => {
             </View>
           </View>
         ))}
-  
-        {/* Edit Booking Modal */}
-        <Modal
-  animationType="slide"
-  transparent={true}
-  visible={editModalVisible}
-  onRequestClose={() => setEditModalVisible(false)}
->
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Edit Booking</Text>
-      
-      <TextInput
-        style={styles.modalInput}
-        placeholder="Name"
-        value={editedBooking?.name}
-        onChangeText={(text) => setEditedBooking({...editedBooking, name: text})}
-      />
-      
-      <TextInput
-        style={styles.modalInput}
-        placeholder="Location"
-        value={editedBooking?.location}
-        onChangeText={(text) => setEditedBooking({...editedBooking, location: text})}
-      />
-      
-      <TextInput
-        style={styles.modalInput}
-        placeholder="Price"
-        keyboardType="numeric"
-        value={editedBooking?.price ? editedBooking.price.toString() : ''}
-        onChangeText={(text) => setEditedBooking({...editedBooking, price: text})}
-      />
-      
-      <TextInput
-        style={styles.modalInput}
-        placeholder="Number"
-        keyboardType="phone-pad"
-        value={editedBooking?.phone || ''}
-        onChangeText={(text) => setEditedBooking({...editedBooking, phone: text})}
-      />
-      
-      <View style={styles.modalButtonRow}>
-        <TouchableOpacity 
-          style={styles.modalCancelButton}
-          onPress={() => setEditModalVisible(false)}
-        >
-          <Text style={styles.modalButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.modalUpdateButton}
-          onPress={handleUpdateBooking}
-        >
-          <Text style={styles.modalButtonText}>Update</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
 
-        {/* Edit Profile Modal */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={editProfileModalVisible}
-          onRequestClose={() => setEditProfileModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Edit Profile</Text>
+      {/* PIN Verification Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={pinModalVisible}
+        onRequestClose={() => {
+          setPinModalVisible(false);
+          setPin('');
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Enter PIN</Text>
+            
+            <TextInput
+              style={styles.pinInput}
+              placeholder="Enter 4-digit PIN"
+              value={pin}
+              onChangeText={setPin}
+              keyboardType="numeric"
+              maxLength={4}
+              secureTextEntry={true}
+            />
+            
+            <TouchableOpacity onPress={handleContactUs}>
+              <Text style={styles.contactLink}>Contact US for PIN to add indoor</Text>
+            </TouchableOpacity>
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity 
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setPinModalVisible(false);
+                  setPin('');
+                }}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
               
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Name"
-                value={editedProfile?.name}
-                onChangeText={(text) => setEditedProfile({...editedProfile, name: text})}
-              />
-              
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Phone Number"
-                keyboardType="phone-pad"
-                value={editedProfile?.phone}
-                onChangeText={(text) => setEditedProfile({...editedProfile, phone: text})}
-              />
-              
-              
-              <View style={styles.modalButtonRow}>
-                <TouchableOpacity 
-                  style={styles.modalCancelButton}
-                  onPress={() => setEditProfileModalVisible(false)}
-                >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.modalUpdateButton}
-                  onPress={handleUpdateProfile}
-                >
-                  <Text style={styles.modalButtonText}>Update</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity 
+                style={styles.modalUpdateButton}
+                onPress={handlePinSubmit}
+              >
+                <Text style={styles.modalButtonText}>Submit</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-  
-        {/* Bottom Navbar */}
-        
-        <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
-      </ScrollView>
-    );
-  };
+        </View>
+      </Modal>
+
+      {/* Edit Booking Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Booking</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Name"
+              value={editedBooking?.name}
+              onChangeText={(text) => setEditedBooking({...editedBooking, name: text})}
+            />
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Location"
+              value={editedBooking?.location}
+              onChangeText={(text) => setEditedBooking({...editedBooking, location: text})}
+            />
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Price"
+              keyboardType="numeric"
+              value={editedBooking?.price ? editedBooking.price.toString() : ''}
+              onChangeText={(text) => setEditedBooking({...editedBooking, price: text})}
+            />
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Number"
+              keyboardType="phone-pad"
+              value={editedBooking?.phone || ''}
+              onChangeText={(text) => setEditedBooking({...editedBooking, phone: text})}
+            />
+            
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity 
+                style={styles.modalCancelButton}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalUpdateButton}
+                onPress={handleUpdateBooking}
+              >
+                <Text style={styles.modalButtonText}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editProfileModalVisible}
+        onRequestClose={() => setEditProfileModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Profile</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Name"
+              value={editedProfile?.name}
+              onChangeText={(text) => setEditedProfile({...editedProfile, name: text})}
+            />
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Phone Number"
+              keyboardType="phone-pad"
+              value={editedProfile?.phone}
+              onChangeText={(text) => setEditedProfile({...editedProfile, phone: text})}
+            />
+            
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity 
+                style={styles.modalCancelButton}
+                onPress={() => setEditProfileModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalUpdateButton}
+                onPress={handleUpdateProfile}
+              >
+                <Text style={styles.modalButtonText}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -519,17 +575,17 @@ const styles = StyleSheet.create({
   logoutButton: {
     backgroundColor: "transparent",
     borderColor: "#000",
-    borderWidth:1,
+    borderWidth: 1,
     borderRadius: 5,
     paddingVertical: 6,
     paddingHorizontal: 15,
-    marginTop:10,
+    marginTop: 10,
   },
-  LogoutBtn:{
+  LogoutBtn: {
     color: "#000",
     fontSize: 15,
     fontWeight: "bold",
-    backgroundColor:'transparent',
+    backgroundColor: 'transparent',
   },
   noBookings: {
     alignItems: 'center',
@@ -599,17 +655,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 15,
     marginRight: 10,
-    marginTop:10,
+    marginTop: 10,
   },
   editProfileText: {
     color: "#FFF",
     fontSize: 14,
     fontWeight: "bold",
   },
-  addAndViewIndoorButtonContainer:{
+  addAndViewIndoorButtonContainer: {
     flexDirection: "row",
     justifyContent: "space-evenly",
+  },
+  // New styles for PIN modal
+  pinInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    fontSize: 18,
+    textAlign: 'center',
+    letterSpacing: 3,
+  },
+  contactLink: {
+    color: '#7a67ff',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+    marginBottom: 20,
   }
 });
-
 export default Profile;

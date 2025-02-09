@@ -2,8 +2,8 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome'; // For the "user" icon
-import Icon from 'react-native-vector-icons/MaterialIcons'; // For existing icons
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 
 

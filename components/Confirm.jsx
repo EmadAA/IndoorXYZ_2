@@ -111,7 +111,7 @@ const Confirm = () => {
       if (!isAvailable) {
         Alert.alert(
           'Time Slot Unavailable',
-          `This time slot is already booked . Please choose another time or date.`,
+         ` This time slot is already booked . Please choose another time or date.`,
           [{ text: 'OK' }]
         );
         return;
@@ -124,6 +124,12 @@ const Confirm = () => {
     const auth = getAuth();
     const userId = auth.currentUser?.uid;
   
+    // Check if name is empty
+    if (!name.trim()) {
+      Alert.alert('Error', 'Name cannot be empty.');
+      return;
+    }
+
     // Check if phone number is empty
     if (!phone.trim()) {
       Alert.alert('Error', 'Phone number cannot be empty.');
@@ -154,12 +160,7 @@ const Confirm = () => {
       Alert.alert('Error', 'Transaction ID is required for Full Payment.');
       return;
     }
-  
-    // Check if user is logged in
-    if (!userId) {
-      Alert.alert('Error', 'User not authenticated.');
-      return;
-    }
+
   
     const isAvailable = await checkSlotAvailability(selectedDate, timeSlot.from, timeSlot.to);
     if (!isAvailable) {
@@ -231,24 +232,22 @@ const Confirm = () => {
             onChangeText={setName}
           />
         </View>
-        <View style={styles.inputContainer}>
-  <TextInput
+            <View style={styles.inputContainer}>
+      <TextInput
     style={styles.input}
     placeholder="Enter Your Number"
     value={phone}
     keyboardType="phone-pad"
     onChangeText={(text) => {
-      // Ensure only numbers are entered
       const formattedText = text.replace(/[^0-9]/g, '');
       
-      // Enforce 11-digit constraint and ensure it starts with "01"
       if (formattedText.length <= 11) {
         setPhone(formattedText);
       }
 
       if (formattedText.length === 11 && !formattedText.startsWith("01")) {
         Alert.alert('Invalid Number', 'Phone number must start with "01" and be exactly 11 digits.');
-        setPhone(""); // Reset input if invalid
+        setPhone(""); 
       }
     }}
   />
@@ -284,7 +283,7 @@ const Confirm = () => {
               ]}
               onPress={() => {
                 setPaymentType('Cash On Sight');
-                setTranxID(''); // Clear TranxID when switching to Cash On Sight
+                setTranxID(''); 
               }}
             >
               <Text style={[

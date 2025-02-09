@@ -227,6 +227,7 @@ const Profile = () => {
       </View>
     );
   }
+  
 
   return (
     <ScrollView style={styles.container}>
@@ -274,7 +275,7 @@ const Profile = () => {
 
       {bookings.length === 0 ? (
         <View style={styles.noBookings}>
-          <Text style={styles.noBookingsText}>No bookings found</Text>
+          <Text style={styles.noBookingsText}>No Indoors found</Text>
         </View>
       ) : 
         bookings.map((booking) => (
@@ -305,7 +306,7 @@ const Profile = () => {
           </View>
         ))}
 
-      {/* PIN Verification Modal */}
+      {/* PIN Verify Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -666,7 +667,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-evenly",
   },
-  // New styles for PIN modal
   pinInput: {
     width: '100%',
     borderWidth: 1,

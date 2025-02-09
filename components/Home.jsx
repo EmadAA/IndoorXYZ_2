@@ -37,7 +37,6 @@ const Home = () => {
         price: doc.data().price || '0',
         phone: doc.data().phone || 'N/A',
         date: doc.data().date || '',
-        status: doc.data().status || 'Available',
       }));
 
       setBookings(bookingsList);
@@ -124,9 +123,9 @@ const Home = () => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4CAF50" style={styles.loader} />
+        <ActivityIndicator size="large" color="#7A67FF" style={styles.loader} />
       ) : filteredBookings.length === 0 ? (
-        <Text style={styles.noPlaygroundsText}>No bookings available</Text>
+        <Text style={styles.noPlaygroundsText}>No Indoors available</Text>
       ) : (
         <FlatList
           data={filteredBookings}
@@ -137,9 +136,9 @@ const Home = () => {
         />
       )}
 
-     <View style={styles.bottomNavContainer} >
+    
      <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
-     </View>
+     
     </View>
   );
 };
@@ -148,7 +147,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop:50,
+    paddingTop:20,
     width: '100%',
   },
   header: {
@@ -204,7 +203,7 @@ const styles = StyleSheet.create({
   },
   playgroundImage: {
     width: '100%',
-    height: 230,
+    height: 220,
   },
   playgroundDetails: {
     flexDirection: 'row',
@@ -260,15 +259,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  bottomNavContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    elevation: 8, // for Android shadow
-    shadowColor: '#000', // for iOS shadow
-  },
+  // bottomNavContainer: {
+  //   position: 'absolute',
+  //   bottom: 0,
+  //   left: 0,
+  //   right: 0,
+  //   backgroundColor: '#fff',
+  //   elevation: 8, // for Android shadow
+  //   shadowColor: '#000', // for iOS shadow
+  // },
 });
 
 export default Home;

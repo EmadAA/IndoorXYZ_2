@@ -25,8 +25,6 @@ const TimePicker = ({ onTimeSelect }) => {
     if (onTimeSelect) onTimeSelect({ from: time, to: nextHour });
   };
 
-  // Removed selectToTime function since we're auto-calculating it
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>From:</Text>

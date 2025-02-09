@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 const SearchSection = ({ onSearch }) => {
   const [location, setLocation] = useState('');
   const [costPerHour, setCostPerHour] = useState('');
-  const duration = '1'; // Fixed duration of 1 hour
+  const duration = '1'; // Fixed
 
   const handleSearch = () => {
     onSearch({

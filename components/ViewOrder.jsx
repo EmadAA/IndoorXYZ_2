@@ -27,7 +27,7 @@ const ViewOrder = () => {
           const bookingReference = bookingDoc.data().bookingReference;
 
           const indoorBookings = await fetchIndoorBookingDetails(bookingReference);
-          // Map each indoor booking to include the main booking data
+          
           return indoorBookings.map(indoorBooking => ({
             ...bookingData,
             id: bookingDoc.id,
@@ -36,7 +36,7 @@ const ViewOrder = () => {
         });
 
         const nestedBookings = await Promise.all(bookingDetailsPromises);
-        // Flatten and sort the bookings by createdAt
+        
         const processedBookings = nestedBookings
           .flat()
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -61,7 +61,7 @@ const ViewOrder = () => {
         return [];
       }
 
-      // Return all documents sorted by createdAt
+     
       return indoorBookingSnapshot.docs
         .map(doc => ({
           ...doc.data(),
@@ -89,10 +89,10 @@ const ViewOrder = () => {
               text: "Yes",
               onPress: async () => {
                 try {
-                  // Delete the specific indoor booking using its ID
+                  
                   await deleteDoc(doc(db, 'indoorBookings', indoorBookingId));
                   
-                  // Update local state
+                  
                   setBookings(prevBookings => 
                     prevBookings.filter(b => 
                       !(b.id === bookingId && b.indoorBookingId === indoorBookingId)

@@ -25,7 +25,7 @@ const BookingList = () => {
       const userBookings = snapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
-        timeRemaining: 3600, // Time set to 60 minutes
+        timeRemaining: 3600,
         isExpired: false
       }));
       

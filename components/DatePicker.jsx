@@ -27,7 +27,7 @@ const DatePicker = ({ onDateSelect }) => {
 
   const selectDate = (date) => {
     setSelectedDate(date);
-    if (onDateSelect) onDateSelect(date); // Notify parent component of the selected date
+    if (onDateSelect) onDateSelect(date); 
   };
 
   return (

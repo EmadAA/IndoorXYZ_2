@@ -1,15 +1,15 @@
+import { useNavigation } from "@react-navigation/native";
 import { addDoc, collection } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Image,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { auth, db } from "../Config/Firebase";
 
@@ -20,6 +20,7 @@ import { auth, db } from "../Config/Firebase";
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [price, setPrice] = useState("");
+  const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
@@ -42,15 +43,14 @@ import { auth, db } from "../Config/Firebase";
     return true;
   };
 
-  const onChange = (event, selectedDate) => {
-    setShowPicker(Platform.OS === "ios");
-    if (selectedDate) setDate(selectedDate);
-  };
+  // const onChange = (event, selectedDate) => {
+  //   setShowPicker(Platform.OS === "ios");
+  //   if (selectedDate) setDate(selectedDate);
+  // };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
     
-    // Check if user is authenticated
     const currentUser = auth.currentUser;
     if (!currentUser) {
       Alert.alert("Error", "You must be logged in to make a booking");
@@ -60,7 +60,6 @@ import { auth, db } from "../Config/Firebase";
     setIsLoading(true);
 
     try {
-      // Booking data with user ID and additional fields
       const bookingData = {
         name,
         phone,
@@ -72,14 +71,14 @@ import { auth, db } from "../Config/Firebase";
         userEmail: currentUser.email,
         status: 'pending', // For booking status tracking
         paymentStatus: 'unpaid', // For payment tracking
-        bookingReference: `BK${Date.now()}`, // Unique booking reference
+        bookingReference: `BK${Date.now()}`,
       };
 
-      // Add to user-specific subcollection
+      
       const userBookingsRef = collection(db, `users/${currentUser.uid}/bookings`);
       const docRef = await addDoc(userBookingsRef, bookingData);
 
-      // Also add to main bookings collection with user reference
+      
       const mainBookingsRef = collection(db, "bookings");
       await addDoc(mainBookingsRef, {
         ...bookingData,
@@ -93,7 +92,7 @@ import { auth, db } from "../Config/Firebase";
           {
             text: "OK",
             onPress: () => {
-              // Clear form after successful submission
+              navigation.navigate("Profile");
               setName("");
               setPhone("");
               setLocation("");

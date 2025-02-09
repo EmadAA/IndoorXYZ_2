@@ -3,7 +3,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Linking,
   StyleSheet,
@@ -33,15 +32,15 @@ const Booking = () => {
         return;
       }
 
-      // Fetch the booking document
+      // Fetch docunment
       const bookingRef = doc(db, 'bookings', bookingId);
       const bookingDoc = await getDoc(bookingRef);
 
       if (bookingDoc.exists()) {
         const bookingData = { id: bookingDoc.id, ...bookingDoc.data() };
-        setIndoorData(bookingData); // This should now include the phone number
+        setIndoorData(bookingData);
       
-        // If you need to fetch and set owner data separately
+        //  fetch owner data 
         if (bookingData.userId) {
           const userRef = doc(db, 'users', bookingData.userId);
           const userDoc = await getDoc(userRef);
@@ -65,31 +64,11 @@ const Booking = () => {
   };
 
 
-  const handleCall = () => {
-    if (indoorData?.phone) { // Change this from ownerData to indoorData
-      const phoneNumber = `tel:${indoorData.phone}`;
-      Linking.canOpenURL(phoneNumber)
-        .then((supported) => {
-          if (supported) {
-            return Linking.openURL(phoneNumber);
-          } else {
-            Alert.alert('Error', 'Your device does not support phone calls.');
-          }
-        })
-        .catch((err) => {
-          console.error('An error occurred', err);
-          Alert.alert('Error', 'Unable to initiate the call.');
-        });
-    } else {
-      Alert.alert('Error', 'Phone number is not available.');
-    }
-  };
+    const handleCall = () => {
+      Linking.openURL(`tel:${indoorData.phone}`);
+    };
   
   
-  
-  // const viewProfile = () => {
-  //   navigation.navigate('Profile', { userId: indoorData?.userId });
-  // };
 
   const handleBooking = () => {
     navigation.navigate('Confirm', { bookingId });
@@ -116,10 +95,6 @@ const Booking = () => {
       {/* Header Section */}
       <View style={styles.header}>
         <Image source={require('../assets/turf.jpg')} style={styles.logo} />
-        {/* <View style={styles.headerIcons}>
-          <Image source={require('../assets/icon.png')} style={styles.headerIcon} />
-          <Image source={require('../assets/icon.png')} style={styles.headerIcon} />
-        </View> */}
       </View>
 
       {/* Owner Info Section */}
@@ -129,7 +104,7 @@ const Booking = () => {
         </View>
         <View style={styles.ownerDetails}>
           <View style={styles.ownerNameContainer}>
-            <Text style={styles.ownerName}>{ownerData?.name || 'Owner Name'}</Text>
+            <Text style={styles.ownerName}>{ownerData?.name || 'N/A'}</Text>
           </View>
           <View style={styles.ownerContactContainer}>
             <Text style={styles.ownerPhone}>Phone: {indoorData.phone || 'N/A'}</Text>
@@ -220,7 +195,7 @@ const Booking = () => {
     },
     ownerInfoTitle: {
       color: 'rgba(0, 0, 0, 0.5)',
-      fontSize: 12,
+      fontSize: 14,
     },
     ownerDetails: {
       marginTop: 10,
